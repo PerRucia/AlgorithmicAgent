@@ -139,9 +139,7 @@ function draw() {
   }
   
   // Update pet (but don't move if resting in house)
-  if (!house.isPetResting()) {
-    myPet.update();
-  }
+  myPet.update();
   
   // Draw pet
   myPet.display();

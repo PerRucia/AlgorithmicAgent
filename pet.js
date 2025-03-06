@@ -61,6 +61,9 @@ class Pet {
     this.energy = 100;  // Energy meter (0 to 100)
     this.hunger = 0;    // Hunger meter (0 to 100, where low means not hungry)
     this.mood = 100;    // Mood meter (0 to 100)
+
+    // Resting properties
+    this.isR
   }
   
   // Update setBoundaries to scale pet based on play area dimensions
@@ -108,10 +111,14 @@ class Pet {
   }
   
   display() {
-    // Draw floating hearts first (so they appear behind the pet)
+    // Do not draw the pet if it's resting in the house.
+    if (typeof house !== 'undefined' && house.isPetResting() && house.occupiedBy === this) {
+      return;
+    }
+    
+    // Draw floating hearts first
     this.displayHearts();
     
-    // Keep existing display code
     push();
     translate(this.x, this.y);
 
@@ -131,19 +138,16 @@ class Pet {
     // -- Draw Body --
     ellipse(0, 0, this.size, this.size * 0.8);
 
-    // -- Face --
+    // -- Draw Face --
     if (!this.isBlinking) {
-      // White sclera
       fill(255);
       ellipse(-this.size * 0.2, -this.size * 0.1, this.size * 0.2, this.size * 0.2);
       ellipse(this.size * 0.2, -this.size * 0.1, this.size * 0.2, this.size * 0.2);
 
-      // Pupils
       fill(0);
       ellipse(-this.size * 0.2, -this.size * 0.1, this.size * 0.1, this.size * 0.1);
       ellipse(this.size * 0.2, -this.size * 0.1, this.size * 0.1, this.size * 0.1);
     } else {
-      // Closed eyes: small horizontal lines
       stroke(0);
       strokeWeight(3);
       line(-this.size * 0.25, -this.size * 0.1, -this.size * 0.15, -this.size * 0.1);
@@ -151,12 +155,10 @@ class Pet {
       noStroke();
     }
 
-    // Cheeks
     fill(255, 150, 150, 100);
     ellipse(-this.size * 0.3, this.size * 0.05, this.size * 0.15, this.size * 0.1);
     ellipse(this.size * 0.3, this.size * 0.05, this.size * 0.15, this.size * 0.1);
 
-    // Mouth
     fill(0);
     arc(0, this.size * 0.1, this.size * 0.3, this.size * 0.2, 0, PI);
     fill(255, 150, 150);
@@ -285,16 +287,15 @@ class Pet {
   }
   
   update() {
-    // Keep subtle wobble or bounce
+    // Existing update logic
     this.wobble += this.wobbleSpeed;
-  
-    // Keep blinking logic
+    
+    // Blinking logic
     this.blinkTimer++;
     if (this.blinkTimer > 120 && !this.isBlinking) {
       this.isBlinking = true;
       this.blinkTimer = 0;
-    } 
-    else if (this.isBlinking && this.blinkTimer > 10) {
+    } else if (this.isBlinking && this.blinkTimer > 10) {
       this.isBlinking = false;
       this.blinkTimer = 0;
     }
@@ -302,7 +303,33 @@ class Pet {
     // Update squish animation if active
     this.updateSquish();
     
-    // Process scheduled heart additions
+    // --- Energy Decay and Recovery Logic ---
+    if (typeof house !== 'undefined' && house.isPetResting() && house.occupiedBy === this) {
+      // Pet is resting, restore energy gradually
+      this.energy = this.energy + 0.5;
+      // Once energy is fully restored, let the pet return to the active area
+      if (this.energy >= 100) {
+        house.petLeave(); // Release the pet from resting
+        console.log("Energy restored; pet is leaving the house.");
+        
+        // Move the pet to its default position
+        this.x = this.targetX;
+        this.y = this.targetY;
+
+      }
+    } else {
+      // Pet is active, decay energy slowly
+      this.energy = max(0, this.energy - 0.2);
+      // If energy becomes fully drained, force pet to rest
+      if (this.energy === 0 && typeof house !== 'undefined') {
+        const restingPos = house.petEnter(this);
+        this.x = restingPos.x;
+        this.y = restingPos.y;
+        console.log("Energy drained; pet is forced to rest in the house.");
+      }
+    }
+    
+    // Process scheduled heart additions (existing logic)
     const currentTime = millis();
     for (let i = this.heartSchedule.length - 1; i >= 0; i--) {
       if (currentTime >= this.heartSchedule[i].time) {
@@ -318,7 +345,12 @@ class Pet {
   
   // Update the interact method to account for scaled size
   interact(mouseX, mouseY) {
-    // Check if mouse is over the pet, use scaled size for hit detection
+    // Do not allow interaction if pet is resting.
+    if (typeof house !== 'undefined' && house.isPetResting() && house.occupiedBy === this) {
+       return false;
+    }
+    
+    // Existing hit detection using scaled size:
     let d = dist(mouseX, mouseY, this.x, this.y);
     if (d < this.size * 0.5) {
       console.log("Pet interacted with!");

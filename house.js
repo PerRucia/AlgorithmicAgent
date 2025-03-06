@@ -175,7 +175,7 @@ class House {
       const chimneyWidth = houseWidth * 0.12;
       const chimneyHeight = roofHeight * 0.8;
       const chimneyX = x + houseWidth * 0.2;
-      const chimneyY = y - roofHeight * 0.6;
+      const chimneyY = y - roofHeight * 0.4;
       
       // Calculate roof intersection point
       const roofSlope = roofHeight / (houseWidth/2 + houseWidth*0.1);

@@ -409,65 +409,60 @@ class Border {
   _drawUserStatus() {
     // Use the full width of the status section
     const availableWidth = this.statusSectionWidth;
-    // We'll draw everything centered horizontally; set barWidth to 80% of available width
+    // Set barWidth to 80% of the available width and center it horizontally
     const barWidth = availableWidth * 0.8;
     const x0 = (availableWidth - barWidth) / 2;
     
-    // Let’s define vertical parameters based on panel height.
-    // For example, leave a top and bottom margin of 10% each.
+    // Define vertical parameters based on panel height; 10% margin top and bottom
     const marginY = this.panelHeight * 0.1;
     const availableHeight = this.panelHeight - 2 * marginY;
     
     // We have 5 rows (4 status bars + 1 coin counter)
     const numRows = 5;
-    // Use a small gap between rows
     const gap = this.panelHeight * 0.02;
-    // The bar (or coin row) height is computed accordingly
     const barHeight = (availableHeight - (numRows - 1) * gap) / numRows;
+    // Corner radius scales with bar height
+    const cornerRadius = barHeight * 0.2;
     
-    // The starting y position (top of status section)
+    // Starting y position (top of status section)
     let currentY = height - this.panelHeight + marginY;
-    
-    // Set text properties
-    textSize(this.panelHeight * 0.04);
-    textAlign(LEFT, CENTER);
     
     // --- Draw Health Bar ---
     fill(255);
-    text("Health", x0, currentY + barHeight/2);
-    fill(200, 50, 50);
-    rect(x0, currentY + gap, barWidth * (myPet.health / 100), barHeight);
+    // Softer pastel red for health
+    fill(color(255, 80, 80, 200));
+    rect(x0, currentY + gap, barWidth * (myPet.health / 100), barHeight, cornerRadius);
     currentY += barHeight + gap;
     
     // --- Draw Energy Bar ---
     fill(255);
-    text("Energy", x0, currentY + barHeight/2);
-    fill(50, 50, 200);
-    rect(x0, currentY + gap, barWidth * (myPet.energy / 100), barHeight);
+    // Softer pastel blue for energy
+    fill(color(80, 80, 255, 200));
+    rect(x0, currentY + gap, barWidth * (myPet.energy / 100), barHeight, cornerRadius);
     currentY += barHeight + gap;
     
     // --- Draw Hunger Bar ---
     fill(255);
-    text("Hunger", x0, currentY + barHeight/2);
-    fill(50, 200, 50);
-    // We assume 0 means full and 100 starving; so use (100 - hunger)
-    rect(x0, currentY + gap, barWidth * ((100 - myPet.hunger) / 100), barHeight);
+    // Swap: use softer pastel yellow for hunger (since it was previously used for mood)
+    fill(color(255, 255, 80, 200));
+    // Note: 0 means full, so fill bar with (100 - hunger) fraction
+    rect(x0, currentY + gap, barWidth * ((100 - myPet.hunger) / 100), barHeight, cornerRadius);
     currentY += barHeight + gap;
     
     // --- Draw Mood Bar ---
     fill(255);
-    text("Mood", x0, currentY + barHeight/2);
-    fill(200, 200, 50);
-    rect(x0, currentY + gap, barWidth * (myPet.mood / 100), barHeight);
+    // Swap: use softer pastel green for mood (instead of yellow)
+    fill(color(180, 255, 80, 200));
+    rect(x0, currentY + gap, barWidth * (myPet.mood / 100), barHeight, cornerRadius);
     currentY += barHeight + gap;
     
     // --- Draw Coin Counter ---
     // We'll draw a coin icon and the formatted coin amount side by side.
-    const coinIconSize = barHeight * 0.75; // Use bar height as reference for coin size
+    const coinIconSize = barHeight * 0.75; // Scale coin size based on bar height
     
     // Draw coin icon
     push();
-    translate(x0 + coinIconSize/2, currentY + barHeight/2); // position at the beginning of the row
+    translate(x0 + coinIconSize / 2, currentY + barHeight / 2); // position at the beginning of the row
     fill(255, 215, 0); // gold
     stroke(200, 150, 0);
     strokeWeight(1);
@@ -485,7 +480,7 @@ class Border {
     fill(255);
     textAlign(RIGHT, CENTER);
     textSize(this.panelHeight * 0.1);
-    text(currency.getFormattedBalance(), x0 + barWidth, currentY + barHeight/2);
+    text(currency.getFormattedBalance(), x0 + barWidth, currentY + barHeight / 2);
   }
   
   _drawStatusSection() {
