@@ -2,7 +2,15 @@ class Pet {
   constructor(x, y) {
     this.x = x;
     this.y = y;
-    this.size = 100;
+    
+    // Base size will be adjusted based on play area dimensions
+    this.baseSize = 100;
+    this.size = this.baseSize; // Initial size, will be adjusted in setBoundaries
+    
+    // Size scaling factors
+    this.minSizeFactor = 0.5; // Minimum size as a fraction of baseSize
+    this.maxSizeFactor = 1.5; // Maximum size as a fraction of baseSize
+    this.sizeFactor = 1.0;    // Current size factor, will adjust based on play area
 
     // Predefined color sequence
     this.colorOptions = [
@@ -31,7 +39,6 @@ class Pet {
     this.targetY = y;
     
     // Keep boundary properties for constraining after window resize
-    this.borderSize = 0; // Default value, will be set by setBoundaries()
     this.minX = 0;
     this.maxX = width;
     this.minY = 0;
@@ -48,23 +55,52 @@ class Pet {
     
     // Scheduled heart timers (instead of setTimeout)
     this.heartSchedule = [];
+    
+    // Add new meters for pet status
+    this.health = 100;  // Health meter (0 to 100)
+    this.energy = 100;  // Energy meter (0 to 100)
+    this.hunger = 0;    // Hunger meter (0 to 100, where low means not hungry)
+    this.mood = 100;    // Mood meter (0 to 100)
   }
   
-  setBoundaries(borderSize) {
-    this.borderSize = borderSize;
-    // Update the boundaries
-    this.minX = this.borderSize + this.size/2;
-    this.maxX = width - this.borderSize - this.size/2;
-    this.minY = this.borderSize + this.size/2;
-    this.maxY = height - this.borderSize - this.size/2;
+  // Update setBoundaries to scale pet based on play area dimensions
+  setBoundaries(minX, minY, maxX, maxY) {
+    // Store the boundaries
+    this.minX = minX + this.size/2;
+    this.maxX = maxX - this.size/2;
+    this.minY = minY + this.size/2;
+    this.maxY = maxY - this.size/2;
     
-    // Also update the pet's movement range to be within the play area
-    this.moveRange = min(width - 2 * this.borderSize, height - 2 * this.borderSize) * 0.3;
+    // Calculate play area dimensions
+    const playAreaWidth = maxX - minX;
+    const playAreaHeight = maxY - minY;
+    
+    // Calculate appropriate size based on play area
+    // Use the smaller dimension to ensure pet fits in both dimensions
+    const smallerDimension = min(playAreaWidth, playAreaHeight);
+    
+    // Scale the pet to be about 1/5 of the smaller dimension
+    // but constrained between minSizeFactor and maxSizeFactor of baseSize
+    const idealSizeFactor = smallerDimension / (this.baseSize * 5);
+    this.sizeFactor = constrain(idealSizeFactor, this.minSizeFactor, this.maxSizeFactor);
+    
+    // Update pet size
+    this.size = this.baseSize * this.sizeFactor;
+    
+    // Update the wobble range based on new size
+    this.wobbleRange = this.size * 0.02; // 2% of pet size
+    
+    // Recalculate boundaries with new size
+    this.minX = minX + this.size/2;
+    this.maxX = maxX - this.size/2;
+    this.minY = minY + this.size/2;
+    this.maxY = maxY - this.size/2;
+    
+    console.log(`Pet size updated: ${this.size}px (factor: ${this.sizeFactor.toFixed(2)})`);
   }
   
   constrainPosition() {
-    // Instead of just constraining to boundaries, 
-    // recenter the pet in the middle of the play area
+    // Recenter the pet in the middle of the play area
     this.x = (this.minX + this.maxX) / 2;
     this.y = (this.minY + this.maxY) / 2;
     this.targetX = this.x;
@@ -137,6 +173,9 @@ class Pet {
       push();
       translate(heart.x, heart.y);
       
+      // Scale heart size based on pet size
+      scale(heart.scale * this.sizeFactor);
+      
       // Make hearts fade out over time
       let alpha = map(heart.lifespan, 0, heart.maxLife, 0, 255);
       let heartColor = heart.color || color(255, 100, 150); // Use heart's color or default
@@ -155,12 +194,12 @@ class Pet {
       
       pop();
       
-      // Update heart position
-      heart.y -= heart.speed;
+      // Update heart position - scale speed with pet size
+      heart.y -= heart.speed * this.sizeFactor;
       heart.lifespan--;
       
       // Add a little side-to-side movement using sin
-      heart.x += sin(heart.lifespan * 0.1) * 0.5;
+      heart.x += sin(heart.lifespan * 0.1) * 0.5 * this.sizeFactor;
     }
     
     // Remove hearts that are no longer visible
@@ -168,7 +207,7 @@ class Pet {
   }
   
   addHeart(useCurrentColor = false) {
-    // Create a new heart particle
+    // Create a new heart particle - scale position offsets with pet size
     this.hearts.push({
       x: this.x + random(-this.size/4, this.size/4),
       y: this.y - this.size/3, // Start a bit above the pet
@@ -277,9 +316,9 @@ class Pet {
     }
   }
   
-  // Update the interact method to log interactions
+  // Update the interact method to account for scaled size
   interact(mouseX, mouseY) {
-    // Check if mouse is over the pet
+    // Check if mouse is over the pet, use scaled size for hit detection
     let d = dist(mouseX, mouseY, this.x, this.y);
     if (d < this.size * 0.5) {
       console.log("Pet interacted with!");

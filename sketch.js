@@ -2,8 +2,9 @@ let myPet;
 let myBorder;
 let backgrounds;
 let interactHandler;
-let currency; // Add currency variable
-let lastPlaytimeReward = 0; // Track when we last gave playtime reward
+let currency;
+let lastPlaytimeReward = 0;
+let house; // Add house reference
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -16,7 +17,6 @@ function setup() {
   
   // Setup currency callbacks if needed
   currency.setOnBalanceChangeCallback((balance, amount, type, reason) => {
-    // You could add visual effects here when currency changes
     console.log(`Currency ${type}: ${amount} (${reason}). New balance: ${balance}`);
   });
   
@@ -27,8 +27,14 @@ function setup() {
   myBorder = new Border();
   myBorder.setThickness(min(width, height) * 0.1);
   
-  // Create pet at the center of the playable area
+  // Get playable area
   let playArea = myBorder.getPlayableArea();
+  
+  // Create house and position it in the bottom right
+  house = new House();
+  house.setPosition(playArea);
+  
+  // Create pet at the center of the playable area
   myPet = new Pet(playArea.width / 2, playArea.height / 2);
   myPet.setBoundaries(0, 0, playArea.width, playArea.height);
   
@@ -50,6 +56,15 @@ function setupInteractionCallbacks() {
       
       // Award a small coin bonus for interacting with pet
       currency.awardInteractionBonus(5);
+      
+      // If pet is resting, make it leave the house
+      if (house.isPetResting()) {
+        house.petLeave();
+        
+        // Move pet slightly away from the house
+        myPet.x -= 50;
+        myPet.y -= 20;
+      }
     },
     onBorderInteract: (x, y) => {
       console.log("Border interaction detected");
@@ -74,11 +89,26 @@ function setupInteractionCallbacks() {
         // Award a bonus for making the pet happy
         currency.addCoins(10, "made pet happy");
       }
+      // Check if house was double-tapped
+      else if (house.contains(x, y)) {
+        // Move pet to the house and make it rest
+        const restingPos = house.petEnter(myPet);
+        myPet.x = restingPos.x;
+        myPet.y = restingPos.y;
+        
+        // Award a bonus for using the house
+        currency.addCoins(15, "pet is resting");
+      }
     },
     onDrag: (x, y, dx, dy) => {
       // If dragging near pet, make it follow the drag
       let d = dist(x, y, myPet.x, myPet.y);
       if (d < myPet.size) {
+        // If pet was resting, make it leave the house
+        if (house.isPetResting()) {
+          house.petLeave();
+        }
+        
         myPet.x = constrain(x, myPet.minX, myPet.maxX);
         myPet.y = constrain(y, myPet.minY, myPet.maxY);
         // Update target position to current position
@@ -96,8 +126,22 @@ function draw() {
   // Draw the current background theme
   backgrounds.draw(playArea);
   
-  // Update pet
-  myPet.update();
+  // Draw the house (it should appear on top of the background)
+  house.display(playArea);
+  
+  // Check if mouse is over house
+  if (house.contains(mouseX, mouseY)) {
+    house.setHover(true);
+    cursor(HAND); // Change cursor to hand when over house
+  } else {
+    house.setHover(false);
+    cursor(ARROW); // Reset cursor
+  }
+  
+  // Update pet (but don't move if resting in house)
+  if (!house.isPetResting()) {
+    myPet.update();
+  }
   
   // Draw pet
   myPet.display();
@@ -139,7 +183,7 @@ function touchEnded() {
   return false; // Prevent default
 }
 
-// Handle window resize
+// Update the windowResized function to include house resizing
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   
@@ -150,6 +194,9 @@ function windowResized() {
   let playArea = myBorder.getPlayableArea();
   myPet.setBoundaries(0, 0, playArea.width, playArea.height);
   myPet.constrainPosition();
+  
+  // Update house position
+  house.resize(playArea);
   
   // Update backgrounds
   backgrounds.resize();

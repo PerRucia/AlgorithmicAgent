@@ -312,62 +312,24 @@ class Border {
   
   // Draw placeholder status section
   _drawStatusSection() {
-    // Status section is now on the LEFT side
-    const statusX = this.statusSectionWidth / 2;
-    const statusY = height - this.panelHeight/2;
+    // Status section is on the LEFT side.
+    const statusX = 10; // left margin
+    const statusY = height - this.panelHeight + 10; // top inside the status panel
     
-    // Draw a subtle background for status section
+    // Draw a subtle background for the status section
     noStroke();
-    fill(0, 0, 0, 15); // Very subtle dark background
+    fill(0, 0, 0, 15);
     rectMode(CORNER);
-    rect(0, height - this.panelHeight, 
-         this.statusSectionWidth, this.panelHeight);
+    rect(0, height - this.panelHeight, this.statusSectionWidth, this.panelHeight);
     
-    // If currency exists, display it here
+    // If currency exists, display it at a top position inside status panel
     if (typeof currency !== 'undefined') {
-      this._drawCurrencyStatus(statusX, statusY - this.panelHeight * 0.2);
-    } else {
-      // Draw placeholder text if currency not available
-      fill(255, 255, 255, 80);
-      textAlign(CENTER, CENTER);
-      textSize(16);
-      text("Pet Status", statusX, statusY);
+      // Adjust vertical position as needed
+      this._drawCurrencyStatus(this.statusSectionWidth / 2, height - this.panelHeight * 0.6);
     }
-  }
-  
-  // New method to draw currency status
-  _drawCurrencyStatus(x, y) {
-    const coinIconSize = 30;
-    const barWidth = this.statusSectionWidth * 0.7;
-    const barHeight = 24;
     
-    // Draw coin icon
-    push();
-    translate(x - barWidth/2 - coinIconSize/2 - 10, y);
-    fill(255, 215, 0); // Gold color
-    stroke(200, 150, 0);
-    strokeWeight(1);
-    ellipse(0, 0, coinIconSize, coinIconSize);
-    
-    // "$" symbol on coin
-    fill(200, 150, 0);
-    noStroke();
-    textSize(coinIconSize * 0.6);
-    textAlign(CENTER, CENTER);
-    text("$", 0, -1);
-    pop();
-    
-    // Draw currency amount
-    fill(255, 255, 255);
-    textAlign(LEFT, CENTER);
-    textSize(18);
-    text(currency.getFormattedBalance(), x - barWidth/2, y);
-    
-    // Draw info label (like "Coins")
-    textAlign(RIGHT, CENTER);
-    textSize(14);
-    fill(255, 255, 255, 150);
-    text("COINS", x + barWidth/2, y);
+    // Draw the pet status meters below the currency display
+    this._drawPetStatus(statusX, height - this.panelHeight * 0.3);
   }
   
   _drawInnerShadow() {
@@ -442,5 +404,98 @@ class Border {
     
     // Recreate buttons with updated positions
     this.createButtons();
+  }
+
+  _drawUserStatus() {
+    // Use the full width of the status section
+    const availableWidth = this.statusSectionWidth;
+    // We'll draw everything centered horizontally; set barWidth to 80% of available width
+    const barWidth = availableWidth * 0.8;
+    const x0 = (availableWidth - barWidth) / 2;
+    
+    // Let’s define vertical parameters based on panel height.
+    // For example, leave a top and bottom margin of 10% each.
+    const marginY = this.panelHeight * 0.1;
+    const availableHeight = this.panelHeight - 2 * marginY;
+    
+    // We have 5 rows (4 status bars + 1 coin counter)
+    const numRows = 5;
+    // Use a small gap between rows
+    const gap = this.panelHeight * 0.02;
+    // The bar (or coin row) height is computed accordingly
+    const barHeight = (availableHeight - (numRows - 1) * gap) / numRows;
+    
+    // The starting y position (top of status section)
+    let currentY = height - this.panelHeight + marginY;
+    
+    // Set text properties
+    textSize(this.panelHeight * 0.04);
+    textAlign(LEFT, CENTER);
+    
+    // --- Draw Health Bar ---
+    fill(255);
+    text("Health", x0, currentY + barHeight/2);
+    fill(200, 50, 50);
+    rect(x0, currentY + gap, barWidth * (myPet.health / 100), barHeight);
+    currentY += barHeight + gap;
+    
+    // --- Draw Energy Bar ---
+    fill(255);
+    text("Energy", x0, currentY + barHeight/2);
+    fill(50, 50, 200);
+    rect(x0, currentY + gap, barWidth * (myPet.energy / 100), barHeight);
+    currentY += barHeight + gap;
+    
+    // --- Draw Hunger Bar ---
+    fill(255);
+    text("Hunger", x0, currentY + barHeight/2);
+    fill(50, 200, 50);
+    // We assume 0 means full and 100 starving; so use (100 - hunger)
+    rect(x0, currentY + gap, barWidth * ((100 - myPet.hunger) / 100), barHeight);
+    currentY += barHeight + gap;
+    
+    // --- Draw Mood Bar ---
+    fill(255);
+    text("Mood", x0, currentY + barHeight/2);
+    fill(200, 200, 50);
+    rect(x0, currentY + gap, barWidth * (myPet.mood / 100), barHeight);
+    currentY += barHeight + gap;
+    
+    // --- Draw Coin Counter ---
+    // We'll draw a coin icon and the formatted coin amount side by side.
+    const coinIconSize = barHeight * 0.75; // Use bar height as reference for coin size
+    
+    // Draw coin icon
+    push();
+    translate(x0 + coinIconSize/2, currentY + barHeight/2); // position at the beginning of the row
+    fill(255, 215, 0); // gold
+    stroke(200, 150, 0);
+    strokeWeight(1);
+    ellipse(0, 0, coinIconSize, coinIconSize);
+    
+    // Draw "$" symbol over the coin
+    fill(200, 150, 0);
+    noStroke();
+    textSize(coinIconSize * 0.6);
+    textAlign(CENTER, CENTER);
+    text("$", 0, -1);
+    pop();
+    
+    // Draw coin amount next to the icon
+    fill(255);
+    textAlign(RIGHT, CENTER);
+    textSize(this.panelHeight * 0.1);
+    text(currency.getFormattedBalance(), x0 + barWidth, currentY + barHeight/2);
+  }
+  
+  _drawStatusSection() {
+    // Draw background for status panel
+    noStroke();
+    fill(0, 0, 0, 15);
+    rectMode(CORNER);
+    rect(0, height - this.panelHeight, this.statusSectionWidth, this.panelHeight);
+    
+    // Call our combined status drawing function
+    this._drawUserStatus();
   }
 }

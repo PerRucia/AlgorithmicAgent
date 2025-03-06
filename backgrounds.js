@@ -26,7 +26,7 @@ class Backgrounds {
         particleCount: 200,
         description: 'Deep space exploration'
       },
-      'underwater': {
+      'underwater': {   
         name: 'Underwater',
         mainColor: color(0, 105, 148),
         floorColor: color(0, 70, 105),
@@ -65,7 +65,7 @@ class Backgrounds {
   setTheme(themeName) {
     if (this.themes[themeName]) {
       this.currentTheme = themeName;
-      this.initParticles(); // Reinitialize particles for the new theme
+      // Do not reinitialize particles here to avoid resetting animations
       return true;
     }
     return false;
