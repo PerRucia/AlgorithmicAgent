@@ -25,12 +25,18 @@ class House {
     // Interaction state
     this.isHovered = false;
     this.occupiedBy = null; // Reference to pet when it's resting
+    this.pet = null; // Reference to pet object
     
     // Initialize smoke particles
     this.initSmoke();
     
     // Size factor for responsive scaling
     this.sizeFactor = 1.0;
+  }
+
+  // Set pet reference
+  setPet(pet) {
+    this.pet = pet;
   }
   
   // Initialize smoke particles coming from chimney
@@ -340,6 +346,26 @@ class House {
       y > houseTop &&
       y < this.y + this.height/2
     );
+  }
+
+  // Toggle the pet's resting state:
+  // If a pet is already resting, make it leave.
+  // Otherwise, if a pet is available (provided via reference), make it enter.
+  interact(mouseX, mouseY) {
+    if (this.occupiedBy) {
+      // Pet is resting: let it leave.
+      this.petLeave();
+      console.log("House tapped: pet is leaving the house.");
+    } else if (this.pet) {
+      // Pet is not resting and available to rest.
+      // Send the pet into the house.
+      const restingPos = this.petEnter(this.pet);
+      // Update pet's position to the house resting position.
+      this.pet.x = restingPos.x;
+      this.pet.y = restingPos.y;
+      console.log("House tapped: pet is entering the house to rest.");
+    }
+    return true;
   }
   
   // Set hover state

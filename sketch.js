@@ -4,7 +4,7 @@ let backgrounds;
 let interactHandler;
 let currency;
 let lastPlaytimeReward = 0;
-let house; // Add house reference
+let house; 
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -29,18 +29,19 @@ function setup() {
   
   // Get playable area
   let playArea = myBorder.getPlayableArea();
-  
-  // Create house and position it in the bottom right
-  house = new House();
-  house.setPosition(playArea);
-  
+
   // Create pet at the center of the playable area
   myPet = new Pet(playArea.width / 2, playArea.height / 2);
   myPet.setBoundaries(0, 0, playArea.width, playArea.height);
   
+  // Create house and position it in the bottom right
+  house = new House();
+  house.setPosition(playArea);
+  house.setPet(myPet);
+  
   // Initialize interaction handler
   interactHandler = new InteractHandler();
-  interactHandler.setReferences(myPet, myBorder, playArea);
+  interactHandler.setReferences(myPet, myBorder, playArea, house);
   
   // Set up interaction callbacks
   setupInteractionCallbacks();
@@ -53,65 +54,55 @@ function setupInteractionCallbacks() {
   interactHandler.setCallbacks({
     onPetInteract: (x, y) => {
       console.log("Pet interaction detected!");
-      
       // Award a small coin bonus for interacting with pet
       currency.awardInteractionBonus(5);
-      
-      // If pet is resting, make it leave the house
-      if (house.isPetResting()) {
-        house.petLeave();
-        
-        // Move pet slightly away from the house
-        myPet.x -= 50;
-        myPet.y -= 20;
-      }
     },
     onBorderInteract: (x, y) => {
       console.log("Border interaction detected");
     },
     onDoubleTap: (x, y) => {
-      // If double tapped on pet, change its color
+      // Check if double-tapped on pet (change color)
       let d = dist(x, y, myPet.x, myPet.y);
-      if (d < myPet.size/2) {
+      if (d < myPet.size / 2) {
         myPet.changeColor();
         
-        // Add some colorful hearts
-        myPet.addColorfulHeart();
-        
-        // Schedule more colorful hearts
+        // Add some colorful hearts and award a bonus
         const currentTime = millis();
         myPet.heartSchedule.push(
           { time: currentTime + 100, colorful: true },
           { time: currentTime + 200, colorful: true },
           { time: currentTime + 300, colorful: true }
         );
-        
-        // Award a bonus for making the pet happy
         currency.addCoins(10, "made pet happy");
       }
-      // Check if house was double-tapped
+      // Otherwise check if house was double-tapped to toggle resting state
       else if (house.contains(x, y)) {
-        // Move pet to the house and make it rest
-        const restingPos = house.petEnter(myPet);
-        myPet.x = restingPos.x;
-        myPet.y = restingPos.y;
-        
-        // Award a bonus for using the house
-        currency.addCoins(15, "pet is resting");
+        if (house.isPetResting()) {
+          // If pet is resting, make it leave and return to default position.
+          house.petLeave();
+          myPet.x = myPet.targetX;
+          myPet.y = myPet.targetY;
+          console.log("House tapped: pet is leaving the house.");
+        } else {
+          // If pet is active, send it to rest in the house.
+          const restingPos = house.petEnter(myPet);
+          myPet.x = restingPos.x;
+          myPet.y = restingPos.y;
+          console.log("House tapped: pet is entering the house to rest.");
+          currency.addCoins(15, "pet is resting");
+        }
       }
     },
     onDrag: (x, y, dx, dy) => {
-      // If dragging near pet, make it follow the drag
+      // If dragging near the pet (active), make it follow the drag.
       let d = dist(x, y, myPet.x, myPet.y);
       if (d < myPet.size) {
-        // If pet was resting, make it leave the house
+        // If pet is resting, make it leave the house.
         if (house.isPetResting()) {
           house.petLeave();
         }
-        
         myPet.x = constrain(x, myPet.minX, myPet.maxX);
         myPet.y = constrain(y, myPet.minY, myPet.maxY);
-        // Update target position to current position
         myPet.targetX = myPet.x;
         myPet.targetY = myPet.y;
       }

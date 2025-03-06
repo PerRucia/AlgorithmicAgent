@@ -303,29 +303,25 @@ class Pet {
     // Update squish animation if active
     this.updateSquish();
     
-    // --- Energy Decay and Recovery Logic ---
+    // --- Energy and Mood Decay / Recovery Logic ---
     if (typeof house !== 'undefined' && house.isPetResting() && house.occupiedBy === this) {
-      // Pet is resting, restore energy gradually
-      this.energy = this.energy + 0.5;
-      // Once energy is fully restored, let the pet return to the active area
+      // Pet is resting: restore energy only; mood remains unchanged.
+      this.energy = min(100, this.energy + 0.2);
       if (this.energy >= 100) {
-        house.petLeave(); // Release the pet from resting
+        house.petLeave(); // Automatically leave when energy is full.
         console.log("Energy restored; pet is leaving the house.");
-        
-        // Move the pet to its default position
+        // Reposition pet at its default target
         this.x = this.targetX;
         this.y = this.targetY;
-
       }
     } else {
-      // Pet is active, decay energy slowly
-      this.energy = max(0, this.energy - 0.2);
-      // If energy becomes fully drained, force pet to rest
-      if (this.energy === 0 && typeof house !== 'undefined') {
-        const restingPos = house.petEnter(this);
-        this.x = restingPos.x;
-        this.y = restingPos.y;
-        console.log("Energy drained; pet is forced to rest in the house.");
+      // Pet is active: decay both energy and mood.
+      this.energy = max(0, this.energy - 0.02);
+      if (this.energy === 0) {
+        // When energy is fully drained, mood decays twice as fast.
+        this.mood = max(0, this.mood - 0.02);
+      } else {
+        this.mood = max(0, this.mood - 0.01);
       }
     }
     

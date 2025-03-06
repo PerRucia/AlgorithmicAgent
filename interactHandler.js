@@ -8,24 +8,24 @@ class InteractHandler {
     this.callbacks = {
       onPetInteract: null,
       onBorderInteract: null,
+      onHouseInteract: null,
       onDoubleTap: null,
-
       onDrag: null
     };
-    
-    // Remove swipe threshold
     
     // Reference to objects that can be interacted with
     this.pet = null;
     this.border = null;
     this.playArea = null;
+    this.house = null;
   }
   
   // Set up references to interactive elements
-  setReferences(pet, border, playArea) {
+  setReferences(pet, border, playArea, house) {
     this.pet = pet;
     this.border = border;
     this.playArea = playArea;
+    this.house = house;
   }
   
   // Set callbacks for different interaction types
@@ -42,7 +42,14 @@ class InteractHandler {
   handleMousePressed(mouseX, mouseY) {
     if (!this.enabled) return;
     
-    // Check if we clicked in the border area
+    // First check: if the click is inside the house area, let the house handle it.
+    if (this.house && typeof this.house.contains === "function" && this.house.contains(mouseX, mouseY)) {
+      // This will toggle the pet’s resting state (entering or leaving) per your house.interact implementation.  
+      const interacted = this.house.interact(mouseX, mouseY);
+      return;
+    }
+    
+    // Then check if we clicked in the border area.
     if (this.border && this.border.isInBorder(mouseX, mouseY)) {
       // Check if a button was clicked
       const buttonClicked = this.border.handleClick(mouseX, mouseY);
