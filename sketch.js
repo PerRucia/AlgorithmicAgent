@@ -2,12 +2,23 @@ let myPet;
 let myBorder;
 let backgrounds;
 let interactHandler;
+let currency; // Add currency variable
+let lastPlaytimeReward = 0; // Track when we last gave playtime reward
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   
   // Force 60 FPS
   frameRate(60);
+  
+  // Create currency with initial balance
+  currency = new Currency(100);
+  
+  // Setup currency callbacks if needed
+  currency.setOnBalanceChangeCallback((balance, amount, type, reason) => {
+    // You could add visual effects here when currency changes
+    console.log(`Currency ${type}: ${amount} (${reason}). New balance: ${balance}`);
+  });
   
   // Create backgrounds manager
   backgrounds = new Backgrounds();
@@ -21,25 +32,34 @@ function setup() {
   myPet = new Pet(playArea.width / 2, playArea.height / 2);
   myPet.setBoundaries(0, 0, playArea.width, playArea.height);
   
-  // Initialize interaction handler with proper references
+  // Initialize interaction handler
   interactHandler = new InteractHandler();
   interactHandler.setReferences(myPet, myBorder, playArea);
   
-  // Set up the callbacks for different interactions
+  // Set up interaction callbacks
+  setupInteractionCallbacks();
+  
+  // Award initial login bonus
+  currency.awardDailyBonus(100);
+}
+
+function setupInteractionCallbacks() {
   interactHandler.setCallbacks({
     onPetInteract: (x, y) => {
-      // This will be called when pet is clicked (handled internally in InteractHandler)
-      console.log("Pet was interacted with");
+      console.log("Pet interaction detected!");
+      
+      // Award a small coin bonus for interacting with pet
+      currency.awardInteractionBonus(5);
     },
     onBorderInteract: (x, y) => {
-      // This will be called when border area is clicked (not on buttons)
-      console.log("Border was interacted with");
+      console.log("Border interaction detected");
     },
     onDoubleTap: (x, y) => {
-      // Double tap handler
+      // If double tapped on pet, change its color
       let d = dist(x, y, myPet.x, myPet.y);
       if (d < myPet.size/2) {
         myPet.changeColor();
+        
         // Add some colorful hearts
         myPet.addColorfulHeart();
         
@@ -50,6 +70,9 @@ function setup() {
           { time: currentTime + 200, colorful: true },
           { time: currentTime + 300, colorful: true }
         );
+        
+        // Award a bonus for making the pet happy
+        currency.addCoins(10, "made pet happy");
       }
     },
     onDrag: (x, y, dx, dy) => {
@@ -81,6 +104,13 @@ function draw() {
   
   // Display the border
   myBorder.display();
+  
+  // Check for playtime rewards (every minute)
+  const currentTime = millis();
+  if (currentTime - lastPlaytimeReward > 60000) { // 1 minute
+    currency.awardPlaytimeBonus(1);
+    lastPlaytimeReward = currentTime;
+  }
 }
 
 function mousePressed() {

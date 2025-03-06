@@ -22,19 +22,17 @@ class Border {
   
   setThickness(thickness) {
     this.thickness = thickness;
-    this.panelHeight = height * 0.25; // Bottom panel takes 25% of screen height
+    this.panelHeight = height * 0.4; // Bottom panel takes 40% of screen height
     
-    // Split panel horizontally - 2/3 for buttons, 1/3 for status
-    this.buttonSectionWidth = width * (2/3);
+    // Swap sections - Now 1/3 for status (left) and 2/3 for buttons (right)
     this.statusSectionWidth = width * (1/3);
+    this.buttonSectionWidth = width * (2/3);
     
     // Size buttons based on width rather than height
-    // Use button section width divided by number of buttons (3) with some margins
-    // This ensures buttons scale appropriately with screen width
     const buttonSpacing = 4; // Number of spaces (3 buttons + margins on both sides)
     this.buttonSize = this.buttonSectionWidth / buttonSpacing;
     
-    // Cap the button size to not exceed 90% of panel height (prevent too tall buttons)
+    // Cap the button size to not exceed 90% of panel height
     this.buttonSize = min(this.buttonSize, this.panelHeight * 0.9);
     
     // Create buttons
@@ -45,14 +43,15 @@ class Border {
     // Clear existing buttons
     this.buttons = [];
     
-    // Calculate available width for buttons in the left section (button section)
+    // Calculate available width for buttons in the RIGHT section now
     const availableWidth = this.buttonSectionWidth;
     
     // Position the three buttons evenly in the button section
+    // but offset by the status section width since buttons are now on the right
     const buttonSpacing = availableWidth / 4; // Divide section into 4 parts for 3 buttons
-    const shopX = buttonSpacing;             // At 1/4 of button section width
-    const inventoryX = buttonSpacing * 2;    // At 2/4 of button section width  
-    const backgroundsX = buttonSpacing * 3;  // At 3/4 of button section width
+    const shopX = this.statusSectionWidth + buttonSpacing;           
+    const inventoryX = this.statusSectionWidth + buttonSpacing * 2;  
+    const backgroundsX = this.statusSectionWidth + buttonSpacing * 3;
     
     // Center buttons vertically in panel
     const buttonY = height - this.panelHeight/2;
@@ -307,31 +306,68 @@ class Border {
   _drawSectionDivider() {
     stroke(0, 0, 0, 40); // Semi-transparent black
     strokeWeight(2);
-    const dividerX = this.buttonSectionWidth;
+    const dividerX = this.statusSectionWidth; // Now the divider is after the status section
     line(dividerX, height - this.panelHeight, dividerX, height);
   }
   
   // Draw placeholder status section
   _drawStatusSection() {
-    // Status section is on the right side
-    const statusX = this.buttonSectionWidth + (this.statusSectionWidth / 2);
+    // Status section is now on the LEFT side
+    const statusX = this.statusSectionWidth / 2;
     const statusY = height - this.panelHeight/2;
     
     // Draw a subtle background for status section
     noStroke();
     fill(0, 0, 0, 15); // Very subtle dark background
     rectMode(CORNER);
-    rect(this.buttonSectionWidth, height - this.panelHeight, 
+    rect(0, height - this.panelHeight, 
          this.statusSectionWidth, this.panelHeight);
     
-    // Draw placeholder text
-    fill(255, 255, 255, 80);
-    textAlign(CENTER, CENTER);
-    textSize(16);
-    text("Pet Status", statusX, statusY);
+    // If currency exists, display it here
+    if (typeof currency !== 'undefined') {
+      this._drawCurrencyStatus(statusX, statusY - this.panelHeight * 0.2);
+    } else {
+      // Draw placeholder text if currency not available
+      fill(255, 255, 255, 80);
+      textAlign(CENTER, CENTER);
+      textSize(16);
+      text("Pet Status", statusX, statusY);
+    }
+  }
+  
+  // New method to draw currency status
+  _drawCurrencyStatus(x, y) {
+    const coinIconSize = 30;
+    const barWidth = this.statusSectionWidth * 0.7;
+    const barHeight = 24;
     
-    // This area will be implemented later with actual pet stats
-    // For now just showing placeholder text
+    // Draw coin icon
+    push();
+    translate(x - barWidth/2 - coinIconSize/2 - 10, y);
+    fill(255, 215, 0); // Gold color
+    stroke(200, 150, 0);
+    strokeWeight(1);
+    ellipse(0, 0, coinIconSize, coinIconSize);
+    
+    // "$" symbol on coin
+    fill(200, 150, 0);
+    noStroke();
+    textSize(coinIconSize * 0.6);
+    textAlign(CENTER, CENTER);
+    text("$", 0, -1);
+    pop();
+    
+    // Draw currency amount
+    fill(255, 255, 255);
+    textAlign(LEFT, CENTER);
+    textSize(18);
+    text(currency.getFormattedBalance(), x - barWidth/2, y);
+    
+    // Draw info label (like "Coins")
+    textAlign(RIGHT, CENTER);
+    textSize(14);
+    fill(255, 255, 255, 150);
+    text("COINS", x + barWidth/2, y);
   }
   
   _drawInnerShadow() {
@@ -391,14 +427,14 @@ class Border {
   
   // Handle window resize
   resize() {
-    this.panelHeight = height * 0.25; // Update panel height
+    this.panelHeight = height * 0.4;
     
-    // Update section widths
-    this.buttonSectionWidth = width * (2/3);
+    // Swap sections here too
     this.statusSectionWidth = width * (1/3);
+    this.buttonSectionWidth = width * (2/3);
     
     // Update button size based on width
-    const buttonSpacing = 4; // Number of spaces (3 buttons + margins on both sides)
+    const buttonSpacing = 4;
     this.buttonSize = this.buttonSectionWidth / buttonSpacing;
     
     // Cap the button size to not exceed 90% of panel height
