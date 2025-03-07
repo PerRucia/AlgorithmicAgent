@@ -316,7 +316,7 @@ class Pet {
       }
     } else {
       // Pet is active: decay both energy and mood.
-      this.energy = max(0, this.energy - 0.02);
+      this.energy = max(0, this.energy - 0.05);
       if (this.energy === 0) {
         // When energy is fully drained, mood decays twice as fast.
         this.mood = max(0, this.mood - 0.02);
