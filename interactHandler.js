@@ -98,11 +98,8 @@ class InteractHandler {
   }
   
   // Handler for touch end events (mobile)
-  // Remove swipe detection from touchEnd
   handleTouchEnd(touchX, touchY) {
     if (!this.enabled) return;
-    
-    // No swipe detection needed
   }
   
   // Handler for touch move events (mobile)

@@ -65,7 +65,6 @@ class Backgrounds {
   setTheme(themeName) {
     if (this.themes[themeName]) {
       this.currentTheme = themeName;
-      // Do not reinitialize particles here to avoid resetting animations
       return true;
     }
     return false;
@@ -133,14 +132,12 @@ class Backgrounds {
         
         // Update particle based on theme
         if (this.currentTheme === 'night' || this.currentTheme === 'space') {
-          // Stars twinkle but don't move much
           fill(theme.particleColor, 
                particle.brightness + sin(frameCount * particle.twinkleSpeed) * 50);
           noStroke();
           ellipse(particle.x, particle.y, particle.size);
         } 
         else if (this.currentTheme === 'underwater') {
-          // Bubbles float up
           particle.y -= particle.speed;
           if (particle.y < 0) particle.y = playableArea.height;
           
@@ -301,7 +298,6 @@ class Backgrounds {
   
   // Resize event handler
   resize() {
-    // Reinitialize particles to match new dimensions
     this.initParticles();
   }
 }

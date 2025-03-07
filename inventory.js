@@ -21,20 +21,16 @@ class Inventory {
   }
 
   // Add an item to the inventory.
-  // category must be "food" or "backgrounds"
   addItem(category, item) {
     const cat = category.toLowerCase();
     if (this.items[cat] !== undefined) {
       // Look for an existing item in this category.
       let existing = this.items[cat].find(i => i.id === item.id);
       if (existing) {
-        // If the item already exists and it's not the default apple,
-        // then update its quantity.
         if (existing.quantity !== "Unlimited") {
           existing.quantity = (existing.quantity || 1) + 1;
         }
       } else {
-        // Add new item with a starting quantity.
         // For food items other than apple, quantity starts at 1.
         let newItem = { ...item, quantity: item.id === "apple" ? "Unlimited" : 1 };
         this.items[cat].push(newItem);
@@ -211,7 +207,6 @@ class Inventory {
     pop();
   }
 
-  // This method is called when the confirm button is pressed.
   confirmUseFood() {
     // Save the object name before using it.
     let usedItemName = this.selectedFoodForUse.name;
@@ -320,7 +315,6 @@ class Inventory {
   }
   
   // Handle taps while the inventory menu is visible.
-  // Returns true if the tap was on a tab.
   handleMousePressed(x, y) {
     // If the use confirmation dialog is visible, handle its buttons.
     if (this.useDialogVisible) {

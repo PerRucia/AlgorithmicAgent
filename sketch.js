@@ -1,3 +1,4 @@
+// Add seenTutorialFlag to track if the user has already seen the tutorial
 let myPet;
 let myBorder;
 let feed;
@@ -9,6 +10,7 @@ let house;
 let shop;
 let inventory;
 let gameStorage;
+let seenTutorialFlag = false;
 
 // Global flag for showing the backgrounds menu
 let backgroundMenuVisible = false;
@@ -25,6 +27,14 @@ let settingsMenuVisible = false;
 
 // Global flag for showing the instructions dialog
 let instructionsDialogVisible = false;
+
+// Add tutorial variables
+let tutorialActive = false;
+let tutorialStep = 0;
+let tutorialSteps = [];
+let skipTutorialButton;
+let nextTutorialButton;
+let prevTutorialButton;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -110,6 +120,7 @@ function setup() {
   // Create pet at the center of the playable area
   myPet = new Pet(playArea.width / 2, playArea.height / 2);
   myPet.setBoundaries(0, 0, playArea.width, playArea.height);
+  myPet.pause()
   
   // Create house and position it in the bottom right
   house = new House();
@@ -125,6 +136,374 @@ function setup() {
   
   // Try to load saved game data
   loadGameData();
+  
+  // If no saved game exists and tutorial hasn't been seen, start tutorial
+  if (!gameStorage.hasSavedGame() && !seenTutorialFlag) {
+    startTutorial();
+  }
+  
+  // Initialize tutorial steps
+  initTutorialSteps();
+}
+
+function initTutorialSteps() {
+  tutorialSteps = [
+    {
+      title: "Welcome!",
+      text: "Welcome to your virtual pet game! This tutorial will show you the basics of taking care of your pet.",
+      highlight: null, // No specific element to highlight
+      position: "center"
+    },
+    {
+      title: "Meet Your Pet",
+      text: "This is your pet! Tap or click on it to interact. Your pet needs attention to stay happy.",
+      highlight: "pet",
+      position: "top"
+    },
+    {
+      title: "Status Panel",
+      text: "This panel shows your pet's health, energy, hunger and mood. Keep an eye on these stats to keep your pet healthy!",
+      highlight: "status",
+      position: "left"
+    },
+    {
+      title: "Feed Your Pet",
+      text: "Your pet gets hungry over time. The feed table in the bottom left contains food. Your pet will eat automatically when hungry.",
+      highlight: "feed",
+      position: "bottom"
+    },
+    {
+      title: "Pet's House",
+      text: "This is your pet's house. When your pet gets tired, tap the house to let them rest and recover energy.",
+      highlight: "house",
+      position: "right"
+    },
+    {
+      title: "Shop",
+      text: "Buy items for your pet in the Shop using coins you earn by interacting with your pet.",
+      highlight: "shop",
+      position: "bottom"
+    },
+    {
+      title: "Inventory",
+      text: "Access your purchased items in the Inventory. Use food items to feed your pet.",
+      highlight: "inventory",
+      position: "bottom"
+    },
+    {
+      title: "Backgrounds",
+      text: "Change your pet's environment with different background themes you can purchase in the shop.",
+      highlight: "backgrounds",
+      position: "bottom"
+    },
+    {
+      title: "Settings",
+      text: "Access game settings, save your progress, and more by tapping the gear icon in the top-right corner.",
+      highlight: "settings",
+      position: "top-right"
+    },
+    {
+      title: "Ready to Play!",
+      text: "You're all set! Remember to save your game regularly and take good care of your pet!",
+      highlight: null,
+      position: "center"
+    }
+  ];
+}
+
+function startTutorial() {
+  tutorialActive = true;
+  tutorialStep = 0;
+  
+  // Create tutorial navigation buttons
+  createTutorialButtons();
+}
+
+function endTutorial() {
+  tutorialActive = false;
+  tutorialStep = 0;
+  seenTutorialFlag = true; // Mark tutorial as seen
+  
+  // Remove tutorial buttons if they exist
+  if (skipTutorialButton) {
+    skipTutorialButton.remove();
+    skipTutorialButton = null;
+  }
+  
+  if (nextTutorialButton) {
+    nextTutorialButton.remove();
+    nextTutorialButton = null;
+  }
+  
+  if (prevTutorialButton) {
+    prevTutorialButton.remove();
+    prevTutorialButton = null;
+  }
+  myPet.resume();
+}
+
+function createTutorialButtons() {
+  // Calculate responsive dimensions
+  const buttonWidth = min(width * 0.2, 150); // Fixed button width based on screen size
+  const buttonHeight = min(height * 0.05, 40);
+  const buttonPadding = min(width, height) * 0.01;
+  const bottomMargin = height * 0.08;
+  const buttonFontSize = max(12, min(width, height) * 0.018) + "px";
+  
+  // Calculate positions to ensure equal spacing
+  const totalWidth = buttonWidth * 3 + buttonWidth; // 3 buttons plus spacing
+  const startX = (width - totalWidth) / 2;
+  
+  // Previous button
+  prevTutorialButton = createButton("← Back");
+  prevTutorialButton.position(startX, height - bottomMargin);
+  prevTutorialButton.size(buttonWidth, buttonHeight);
+  prevTutorialButton.mousePressed(() => {
+    tutorialStep = max(tutorialStep - 1, 0);
+    // Restore next button functionality if moved back from last step
+    if (tutorialStep < tutorialSteps.length - 1) {
+      nextTutorialButton.html("Next →");
+      nextTutorialButton.mousePressed(() => {
+        tutorialStep = min(tutorialStep + 1, tutorialSteps.length - 1);
+        if (tutorialStep === tutorialSteps.length - 1) {
+          nextTutorialButton.html("Finish");
+          nextTutorialButton.mousePressed(endTutorial);
+        }
+      });
+    }
+  });
+  prevTutorialButton.style("background-color", "#555555");
+  prevTutorialButton.style("color", "white");
+  prevTutorialButton.style("border", "none");
+  prevTutorialButton.style("padding", buttonPadding + "px");
+  prevTutorialButton.style("border-radius", "4px");
+  prevTutorialButton.style("cursor", "pointer");
+  prevTutorialButton.style("font-size", buttonFontSize);
+  prevTutorialButton.style("text-align", "center");
+  
+  // Next button
+  nextTutorialButton = createButton("Next →");
+  nextTutorialButton.position(startX + buttonWidth * 1.5, height - bottomMargin);
+  nextTutorialButton.size(buttonWidth, buttonHeight);
+  nextTutorialButton.mousePressed(() => {
+    tutorialStep = min(tutorialStep + 1, tutorialSteps.length - 1);
+    // If last step, change button text
+    if (tutorialStep === tutorialSteps.length - 1) {
+      nextTutorialButton.html("Finish");
+      nextTutorialButton.mousePressed(endTutorial);
+    }
+  });
+  nextTutorialButton.style("background-color", "#4CAF50");
+  nextTutorialButton.style("color", "white");
+  nextTutorialButton.style("border", "none");
+  nextTutorialButton.style("padding", buttonPadding + "px");
+  nextTutorialButton.style("border-radius", "4px");
+  nextTutorialButton.style("cursor", "pointer");
+  nextTutorialButton.style("font-size", buttonFontSize);
+  nextTutorialButton.style("text-align", "center");
+  
+  // Skip button
+  skipTutorialButton = createButton("Skip Tutorial");
+  skipTutorialButton.position(startX + buttonWidth * 3, height - bottomMargin);
+  skipTutorialButton.size(buttonWidth, buttonHeight);
+  skipTutorialButton.mousePressed(endTutorial);
+  skipTutorialButton.style("background-color", "#ff5555");
+  skipTutorialButton.style("color", "white");
+  skipTutorialButton.style("border", "none");
+  skipTutorialButton.style("padding", buttonPadding + "px");
+  skipTutorialButton.style("border-radius", "4px");
+  skipTutorialButton.style("cursor", "pointer");
+  skipTutorialButton.style("font-size", buttonFontSize);
+  skipTutorialButton.style("text-align", "center");
+  
+  // Hide previous button on first step
+  if (tutorialStep === 0) {
+    prevTutorialButton.style("visibility", "hidden");
+  }
+}
+
+function updateTutorialButtonsVisibility() {
+  if (!tutorialActive) return;
+  
+  // Show/hide previous button based on current step
+  if (tutorialStep === 0) {
+    prevTutorialButton.style("visibility", "hidden");
+  } else {
+    prevTutorialButton.style("visibility", "visible");
+  }
+  
+  // Update next button text on last step
+  if (tutorialStep === tutorialSteps.length - 1) {
+    nextTutorialButton.html("Finish");
+  } else {
+    nextTutorialButton.html("Next →");
+  }
+}
+
+function displayTutorial() {
+  if (!tutorialActive || tutorialSteps.length === 0) return;
+  
+  // Get current step data
+  const step = tutorialSteps[tutorialStep];
+  
+  // Draw semi-transparent overlay
+  fill(0, 150);
+  noStroke();
+  rect(0, 0, width, height);
+
+  // Opacity for highlighted elements
+  let opacity = 120;
+  
+  // Create cutout/highlight for the relevant element
+  drawingContext.globalCompositeOperation = 'destination-out';
+  
+  // Highlight the appropriate element based on the current step
+  if (step.highlight) {
+    switch(step.highlight) {
+      case "pet":
+        // Highlight pet with a semi-transparent circle
+        if (myPet) {
+          fill(255, 120);
+          noStroke();
+          ellipse(myPet.x, myPet.y, myPet.size * 1.5);
+        }
+        break;
+      case "status":
+        // Highlight status panel with semi-transparency
+        fill(255, 120);
+        noStroke();
+        rect(0, height - myBorder.panelHeight, myBorder.statusSectionWidth, myBorder.panelHeight, 10);
+        break;
+      case "feed":
+        // Calculate feed position
+        let playArea = myBorder.getPlayableArea();
+        let feedX = playArea.x + playArea.width * 0.1;
+        let feedY = playArea.y + playArea.height * 0.8;
+        let feedWidth = playArea.width * feed.tableScale;
+        let feedHeight = feedWidth * 0.3;
+        
+        // Highlight feed table with semi-transparency
+        fill(255, 120);
+        noStroke();
+        rect(feedX - 20, feedY - 20, feedWidth + 40, feedHeight + 40, 10);
+        break;
+      case "house":
+        // Highlight house with semi-transparency
+        if (house) {
+          fill(255, 120);
+          noStroke();
+          let housePos = house.getPosition();
+          rectMode(CENTER);
+          rect(housePos.x, housePos.y * 0.90, house.width * 1.4, house.height * 1.4, 10);
+          rectMode(CORNER);
+        }
+        break;
+      case "shop":
+        // Find shop button with semi-transparency
+        for (let button of myBorder.buttons) {
+          if (button.type === "shop") {
+            fill(255, 120);
+            noStroke();
+            ellipse(button.x, button.y, button.width * 1.5);
+            break;
+          }
+        }
+        break;
+      case "inventory":
+        // Find inventory button with semi-transparency
+        for (let button of myBorder.buttons) {
+          if (button.type === "inventory") {
+            fill(255, 120);
+            noStroke();
+            ellipse(button.x, button.y, button.width * 1.5);
+            break;
+          }
+        }
+        break;
+      case "backgrounds":
+        // Find backgrounds button with semi-transparency
+        for (let button of myBorder.buttons) {
+          if (button.type === "backgrounds") {
+            fill(255, 120);
+            noStroke();
+            ellipse(button.x, button.y, button.width * 1.5);
+            break;
+          }
+        }
+        break;
+      case "settings":
+        // Highlight settings gear with semi-transparency
+        fill(255, 120);
+        noStroke();
+        ellipse(width - settingsButtonSize/2 - settingsButtonPadding, 
+                settingsButtonSize/2 + settingsButtonPadding, 
+                settingsButtonSize * 1.5);
+        break;
+      default:
+        break;
+    }
+  }
+  
+  // Reset composite operation
+  drawingContext.globalCompositeOperation = 'source-over';
+  
+  // Draw tutorial dialog
+  let dialogWidth = min(width * 0.8, 500);
+  let dialogHeight = 180;
+  let dialogX = width / 2 - dialogWidth / 2;
+  let dialogY;
+  
+  // Position dialog based on position property
+  switch (step.position) {
+    case "top":
+      dialogY = 50;
+      break;
+    case "bottom":
+      dialogY = height - dialogHeight - 100;
+      break;
+    case "left":
+      dialogY = height / 2 - dialogHeight / 2;
+      break;
+    case "right":
+      dialogY = height / 2 - dialogHeight / 2;
+      break;
+    case "top-right":
+      dialogY = 50;
+      dialogX = width - dialogWidth - 20;
+      break;
+    default: // center
+      dialogY = height / 2 - dialogHeight / 2;
+      break;
+  }
+  
+  // Draw semi-transparent dialog box
+  fill(255, 250, 240, 230);
+  stroke(60, 100, 150, 200);
+  strokeWeight(2);
+  rect(dialogX, dialogY, dialogWidth, dialogHeight, 15);
+  
+  // Draw title
+  noStroke();
+  fill(60, 100, 150);
+  textSize(22);
+  textAlign(CENTER, TOP);
+  text(step.title, dialogX + dialogWidth / 2, dialogY + 20);
+  
+  // Draw divider line
+  stroke(200, 200, 200, 200);
+  strokeWeight(1);
+  line(dialogX + 20, dialogY + 55, dialogX + dialogWidth - 20, dialogY + 55);
+  
+  // Draw text
+  fill(60, 60, 80);
+  noStroke();
+  textSize(18);
+  textAlign(LEFT, TOP);
+  textWrap(WORD);
+  text(step.text, dialogX + 30, dialogY + 70, dialogWidth - 60);
+  
+  // Update navigation buttons visibility
+  updateTutorialButtonsVisibility();
 }
 
 function loadGameData() {
@@ -160,6 +539,13 @@ function loadGameData() {
       if (savedData.shop && savedData.shop.backgroundItems) {
         shop.backgroundItems = savedData.shop.backgroundItems;
       }
+
+      // Load tutorial flag
+      if (savedData.hasOwnProperty('seenTutorial')) {
+        seenTutorialFlag = savedData.seenTutorial;
+      } else {
+        seenTutorialFlag = true; // Assume already seen for existing saves
+      }
       
       console.log("Game data loaded successfully!");
     }
@@ -172,7 +558,8 @@ function saveGameData() {
     currency: currency,
     inventory: inventory,
     backgrounds: backgrounds,
-    shop: shop
+    shop: shop,
+    seenTutorial: seenTutorialFlag // Save tutorial flag
   };
   
   const success = gameStorage.saveGame(gameData);
@@ -251,6 +638,12 @@ function draw() {
   
   // Draw settings button in top-right corner
   drawSettingsButton();
+  
+  // If tutorial is active, display it on top of everything
+  if (tutorialActive) {
+    displayTutorial();
+    return; // Skip other UI elements when tutorial is active
+  }
   
   // If the instructions dialog should be visible, draw it
   if (instructionsDialogVisible) {
@@ -335,7 +728,7 @@ function drawSettingsMenu() {
   const menuWidth = min(width * 0.8, 400);
   const buttonHeight = 40;
   const spacing = 15;
-  const buttonsCount = 4;
+  const buttonsCount = 3; // Reduced from 4 to 3
   const menuHeight = buttonHeight * buttonsCount + spacing * (buttonsCount + 2);
   
   // Menu position
@@ -355,12 +748,11 @@ function drawSettingsMenu() {
   textSize(24);
   text("Settings", width / 2, menuY - spacing * 0.25);
   
-  // Draw menu buttons
+  // Draw menu buttons - removed Instructions button
   const buttonOptions = [
     { label: "Save Game", color: color(50, 150, 50) },
     { label: "Clear Save", color: color(200, 100, 50) },
-    { label: "Start New Game", color: color(70, 120, 200) },
-    { label: "Instructions", color: color(150, 50, 150) }
+    { label: "Start New Game", color: color(70, 120, 200) }
   ];
   
   for (let i = 0; i < buttonOptions.length; i++) {
@@ -484,7 +876,7 @@ function checkSettingsMenuButtons(x, y) {
   const menuWidth = min(width * 0.8, 400);
   const buttonHeight = 40;
   const spacing = 15;
-  const buttonsCount = 4;
+  const buttonsCount = 3; // Reduced from 4 to 3
   const menuHeight = buttonHeight * buttonsCount + spacing * (buttonsCount + 2);
   
   const menuX = width / 2 - menuWidth / 2;
@@ -493,7 +885,7 @@ function checkSettingsMenuButtons(x, y) {
   const btnWidth = menuWidth * 0.8;
   const btnX = width / 2 - btnWidth / 2;
   
-  for (let i = 0; i < 4; i++) { // Updated from 3 to 4
+  for (let i = 0; i < 3; i++) { // Loop through 3 buttons
     const btnY = menuY + spacing * (i + 1.5) + buttonHeight * i;
     
     if (x > btnX && x < btnX + btnWidth && 
@@ -526,12 +918,11 @@ function checkSettingsMenuButtons(x, y) {
             currency.resetBalance(900);
             inventory.reset();
             shop.reset();
-            myPet = new Pet(width/2, height/2);
             let playArea = myBorder.getPlayableArea();
+            myPet = new Pet(playArea.width / 2, playArea.height / 2);
             myPet.setBoundaries(0, 0, playArea.width, playArea.height);
             house.setPet(myPet);
             interactHandler.setReferences(myPet, myBorder, playArea, house);
-            
             // Show confirmation message
             let msg = createDiv("New game started!");
             msg.position(width/2, height/2);
@@ -543,11 +934,14 @@ function checkSettingsMenuButtons(x, y) {
             msg.style('position', 'absolute');
             msg.style('transform', 'translate(-50%, -50%)');
             msg.style('z-index', '1000');
-            setTimeout(() => msg.remove(), 1500);
+            setTimeout(() => {
+              msg.remove();
+              // Only start tutorial if it hasn't been seen before
+              if (!seenTutorialFlag) {
+                startTutorial();
+              }
+            }, 1500);
           }
-          break;
-        case 3: // Instructions
-          instructionsDialogVisible = true;
           break;
       }
       
@@ -568,6 +962,12 @@ function checkSettingsMenuButtons(x, y) {
 }
 
 function mousePressed() {
+  // During tutorial, only handle tutorial navigation buttons
+  if (tutorialActive) {
+    // Button handling is managed by the p5 buttons
+    return false;
+  }
+  
   if (gameOver) {
     return false;
   }
@@ -736,4 +1136,17 @@ function windowResized() {
   
   // Update backgrounds
   backgrounds.resize();
+  
+  // Reposition tutorial buttons if active
+  if (tutorialActive) {
+    if (skipTutorialButton) {
+      skipTutorialButton.position(width - 120, height - 50);
+    }
+    if (nextTutorialButton) {
+      nextTutorialButton.position(width/2 + 50, height - 50);
+    }
+    if (prevTutorialButton) {
+      prevTutorialButton.position(width/2 - 100, height - 50);
+    }
+  }
 }

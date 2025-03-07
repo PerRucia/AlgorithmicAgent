@@ -19,7 +19,6 @@ class Shop {
     ];
 
     // For the Backgrounds category, add purchasable background items.
-    // Each background costs 1000 coins and can only be purchased once.
     this.backgroundItems = [
       { id: 'night', name: 'Night', description: 'A peaceful starry night background.\n\nBonus: Slows down energy loss.', 
         price: 100, stock: 1 },
@@ -252,7 +251,6 @@ class Shop {
           break;
         case 'medicine':
           // Draw a pill bottle: a slightly rounded rectangle with a small red plus.
-          // Bottle.
           fill(220);
           rect(0, 0, iconSize, iconSize * 0.8, 5);
           // Inner highlight.

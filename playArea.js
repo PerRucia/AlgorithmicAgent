@@ -14,12 +14,6 @@ class PlayArea {
     this.height = height;
   }
   
-  display() {
-    // Empty display method - no background, grass, or pebbles
-    // This method is kept empty but maintained for compatibility
-    // in case other parts of the code call it
-  }
-  
   // Check if a point is within the play area
   contains(x, y) {
     return (x > this.x && x < this.x + this.width &&

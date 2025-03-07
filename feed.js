@@ -1,7 +1,5 @@
 class Feed {
   constructor() {
-    // Set up default dimensions/colors if needed.
-    // Using a wood-like color for the table.
     this.tableColor = color(160, 82, 45);
     this.legColor = color(120, 66, 18);
     this.outlineColor = color(80);
@@ -14,9 +12,7 @@ class Feed {
   }
   
   // Place a food item on the table.
-  // 'food' is expected to be an object with at least a 'name' property.
   placeFood(food) {
-    // Use a switch case to determine number of servings based on food name.
     let servings = 0;
     switch (food.name) {
       case 'Burger':
@@ -38,7 +34,6 @@ class Feed {
     this.foodServings += servings;
   }
   
-  // Optionally, clear all placed food.
   clearFood() {
     this.servings = 0;
   }
@@ -51,13 +46,10 @@ class Feed {
     const tableWidth = playableArea.width * this.tableScale;
     const tableTopThickness = tableWidth * 0.15;
     
-    // Set starting x position on the table top with a small gap.
     let gap = 10;
     let currentX = tableX + gap;
-    // Vertically center food items on the table top.
     let posY = tableY;
       
-    // Define drawing parameters for pellets.
     const pelletDiameter = 20;
     const pelletSpacing = 25;
 
@@ -66,7 +58,6 @@ class Feed {
       push();
       fill(255, 0, 0);
       noStroke();
-      // ensure each added pellet does not exceed the table width, add to a new row if it does
       if (currentX + pelletDiameter > tableX + tableWidth - gap) {
         currentX = tableX + gap;
         posY -= pelletSpacing;
@@ -88,7 +79,6 @@ class Feed {
     
   // Display the food table in the bottom left of the playable area.
   display(playableArea) {
-    // Define table top position within the playable area.
     const tableX = playableArea.x + playableArea.width * 0.1;
     const tableY = playableArea.y + playableArea.height * 0.8;
     
@@ -96,7 +86,7 @@ class Feed {
     const tableWidth = playableArea.width * this.tableScale;
     
     // The table top thickness, leg dimensions, etc. are proportional to the tableWidth.
-    const tableTopThickness = tableWidth * 0.15;  // Thickness of the table top.
+    const tableTopThickness = tableWidth * 0.15;  
     const legWidth = tableWidth * 0.15;
     const legHeight = tableWidth * 0.2;
     
@@ -123,7 +113,6 @@ class Feed {
     
     pop();
     
-    // Draw any food items placed on the table.
     this.displayPlacedFood(playableArea);
   }
 }

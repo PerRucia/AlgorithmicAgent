@@ -44,8 +44,8 @@ class House {
     this.smoke = [];
     for (let i = 0; i < this.maxSmoke; i++) {
       this.smoke.push({
-        x: 0, // Will be set in updateSmoke()
-        y: 0, // Will be set in updateSmoke()
+        x: 0, 
+        y: 0, 
         size: random(10, 20),
         opacity: random(30, 80),
         speed: random(0.2, 0.5),
@@ -60,8 +60,8 @@ class House {
     this.comfortParticles = [];
     for (let i = 0; i < this.maxComfortParticles; i++) {
       this.comfortParticles.push({
-        x: 0, // Will be set relative to pet position
-        y: 0, // Will be set relative to pet position
+        x: 0, 
+        y: 0, 
         type: random() < 0.3 ? 'zzz' : (random() < 0.5 ? 'heart' : 'star'),
         size: random(8, 16),
         opacity: random(150, 255),
@@ -117,6 +117,10 @@ class House {
     }
     
     pop();
+  }
+
+  getPosition() {
+    return { x: this.x, y: this.y };
   }
   
   // Draw the main house structure
@@ -283,7 +287,6 @@ class House {
     for (let i = 0; i < this.comfortParticles.length; i++) {
       let p = this.comfortParticles[i];
       
-      // Skip if not initialized
       if (!p.initialized) continue;
       
       // Calculate fade
@@ -348,9 +351,7 @@ class House {
     );
   }
 
-  // Toggle the pet's resting state:
-  // If a pet is already resting, make it leave.
-  // Otherwise, if a pet is available (provided via reference), make it enter.
+  // Toggle the pet's resting state
   interact(mouseX, mouseY) {
     if (this.occupiedBy) {
       // Pet is resting: let it leave.
@@ -360,7 +361,6 @@ class House {
       this.pet.y = this.pet.targetY;
     } else if (this.pet) {
       // Pet is not resting and available to rest.
-      // Send the pet into the house.
       const restingPos = this.petEnter(this.pet);
       // Update pet's position to the house resting position.
       this.pet.x = restingPos.x;

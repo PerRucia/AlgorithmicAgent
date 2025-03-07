@@ -8,23 +8,21 @@ class Pet {
     this.size = this.baseSize; // Initial size, will be adjusted in setBoundaries
     
     // Size scaling factors
-    this.minSizeFactor = 0.5; // Minimum size as a fraction of baseSize
-    this.maxSizeFactor = 1.5; // Maximum size as a fraction of baseSize
-    this.sizeFactor = 1.0;    // Current size factor, will adjust based on play area
-
-    // Initialize colors after p5 is ready
+    this.minSizeFactor = 0.5;
+    this.maxSizeFactor = 1.5;
+    this.sizeFactor = 1.0;  
     this.initializeColors();
 
     // Keep the wobble/bounce effect
     this.wobble = 0;
     this.wobbleSpeed = 0.05;
-    this.wobbleRange = 2; // a small vertical bounce
-
+    this.wobbleRange = 2; 
     // Blinking logic
+
     this.blinkTimer = 0;
     this.isBlinking = false;
     
-    this.targetX = x; // Keep the target at the initial position
+    this.targetX = x; 
     this.targetY = y;
     
     // Keep boundary properties for constraining after window resize
@@ -34,23 +32,30 @@ class Pet {
     this.maxY = height;
     
     // Squish effect properties
-    this.squishX = 1; // horizontal scale
-    this.squishY = 1; // vertical scale
+    this.squishX = 1; 
+    this.squishY = 1; 
     this.isSquished = false;
     this.squishTimer = 0;
     
     // Heart particles array
     this.hearts = [];
     
-    // Scheduled heart timers (instead of setTimeout)
+    // Scheduled heart timers
     this.heartSchedule = [];
     
     // Add new meters for pet status
-    this.health = 100;  // Health meter (0 to 100)
-    this.energy = 100;  // Energy meter (0 to 100)
-    this.hunger = 0;    // Hunger meter (0 to 100, where low means not hungry)
-    this.mood = 100;    // Mood meter (0 to 100)
+    this.health = 100;  
+    this.energy = 100;  
+    this.hunger = 0;   
+    this.mood = 100;    
     this.isDead = false;
+
+    // Bonuses based on background theme
+    this.healthBonus = 1.0;
+    this.energyBonus = 1.0;
+    this.hungerBonus = 1.0;
+    this.moodBonus = 1.0;
+    this.paused = false;
 
   }
   
@@ -67,11 +72,9 @@ class Pet {
     const playAreaHeight = maxY - minY;
     
     // Calculate appropriate size based on play area
-    // Use the smaller dimension to ensure pet fits in both dimensions
     const smallerDimension = min(playAreaWidth, playAreaHeight);
     
     // Scale the pet to be about 1/5 of the smaller dimension
-    // but constrained between minSizeFactor and maxSizeFactor of baseSize
     const idealSizeFactor = smallerDimension / (this.baseSize * 5);
     this.sizeFactor = constrain(idealSizeFactor, this.minSizeFactor, this.maxSizeFactor);
     
@@ -79,7 +82,7 @@ class Pet {
     this.size = this.baseSize * this.sizeFactor;
     
     // Update the wobble range based on new size
-    this.wobbleRange = this.size * 0.02; // 2% of pet size
+    this.wobbleRange = this.size * 0.02;
     
     // Recalculate boundaries with new size
     this.minX = minX + this.size/2;
@@ -353,26 +356,25 @@ class Pet {
     
     // --- Energy, Mood, and Hunger Update Logic ---
     // Decay rates for the various meters
-    let healthDecayRate = 0.04;
+    let healthDecayRate = 0.03;
     let energyDecayRate = 0.05;
     let hungerIncreaseRate = 0.1;
     let moodDecayRate = 0.1;
 
-    // Bonuses based on background theme
-    let healthBonus = 1.0;
-    let energyBonus = 1.0;
-    let hungerBonus = 1.0;
-    let moodBonus = 1.0;
+    this.healthBonus = (this.paused) ? 0 : 1.0;
+    this.energyBonus = (this.paused) ? 0 : 1.0;
+    this.hungerBonus = (this.paused) ? 0 : 1.0;
+    this.moodBonus = (this.paused) ? 0 : 1.0;
 
     if (backgrounds.currentTheme === "night") {
       // Halves energy decay rate
-      energyBonus = 0.5;
+      this.energyBonus = 0.5;
     } else if (backgrounds.currentTheme === "space") {
       // Halves mood decay rate
-      moodBonus = 0.5;
+      this.moodBonus = 0.5;
     } else if (backgrounds.currentTheme === "underwater") {
       // Halves health decay rate
-      healthBonus = 0.5;
+      this.healthBonus = 0.5;
     }
 
     if (typeof house !== 'undefined' && house.isPetResting() && house.occupiedBy === this) {
@@ -387,17 +389,17 @@ class Pet {
       }
     } else {
       // Pet is active: update all meters.
-      this.energy = max(0, this.energy - energyDecayRate * energyBonus);
+      this.energy = max(0, this.energy - energyDecayRate * this.energyBonus);
       
       // Mood decays normally, but if energy is 0 it decays twice as fast.
       if (this.energy === 0) {
-        this.mood = max(0, this.mood - moodDecayRate * moodBonus * 2);
+        this.mood = max(0, this.mood - moodDecayRate * this.moodBonus * 2);
       } else {
-        this.mood = max(0, this.mood - moodDecayRate * moodBonus);
+        this.mood = max(0, this.mood - moodDecayRate * this.moodBonus);
       }
       
       // Hunger increases slowly (0 = full, 100 = starving)
-      this.hunger = min(100, this.hunger + hungerIncreaseRate * hungerBonus);
+      this.hunger = min(100, this.hunger + hungerIncreaseRate * this.hungerBonus);
     }
     
     // Process scheduled heart additions...
@@ -418,7 +420,7 @@ class Pet {
     if (this.energy === 0) decayCount++;
     if (this.mood === 0) decayCount++;
     if (this.hunger === 100) decayCount++;
-    this.health = max(0, this.health - healthDecayRate * decayCount * healthBonus);
+    this.health = max(0, this.health - healthDecayRate * decayCount * this.healthBonus);
 
     // Check if pet's health has reached 0.
     if (this.health <= 0 && !this.isDead) {
@@ -574,6 +576,18 @@ class Pet {
     deathOverlay.remove();
     
     console.log("Game reset!");
+  }
+
+  // Pause decay of all of the pet's meters
+  pause() {
+    this.paused = true;
+    console.log("Pet has paused all activity.");
+  }
+
+  // Resume decay of all of the pet's meters
+  resume() {
+    this.paused = false;
+    console.log("Pet has resumed normal activity.");
   }
   
   // Update the interact method to account for scaled size

@@ -22,20 +22,14 @@ class Border {
   
   setThickness(thickness) {
     this.thickness = thickness;
-    this.panelHeight = height * 0.4; // Bottom panel takes 40% of screen height
-    
-    // Swap sections - Now 1/3 for status (left) and 2/3 for buttons (right)
+    this.panelHeight = height * 0.4; 
     this.statusSectionWidth = width * (1/3);
     this.buttonSectionWidth = width * (2/3);
     
-    // Size buttons based on width rather than height
     const buttonSpacing = 4; // Number of spaces (3 buttons + margins on both sides)
     this.buttonSize = this.buttonSectionWidth / buttonSpacing;
-    
-    // Cap the button size to not exceed 90% of panel height
     this.buttonSize = min(this.buttonSize, this.panelHeight * 0.9);
     
-    // Create buttons
     this.createButtons();
   }
   
@@ -46,8 +40,6 @@ class Border {
     // Calculate available width for buttons in the RIGHT section now
     const availableWidth = this.buttonSectionWidth;
     
-    // Position the three buttons evenly in the button section
-    // but offset by the status section width since buttons are now on the right
     const buttonSpacing = availableWidth / 4; // Divide section into 4 parts for 3 buttons
     const shopX = this.statusSectionWidth + buttonSpacing;           
     const inventoryX = this.statusSectionWidth + buttonSpacing * 2;  
@@ -68,7 +60,6 @@ class Border {
       action: () => {
         shop.toggleVisibility();
         console.log("Shop button clicked");
-        // Add shop functionality here
       }
     });
     
@@ -84,7 +75,6 @@ class Border {
       action: () => {
         inventory.toggleVisibility();
         console.log("Inventory button clicked");
-        // Add inventory functionality here
       }
     });
   
@@ -99,7 +89,6 @@ class Border {
         isHovered: false,
         action: () => {
           console.log("Themes button clicked - opening menu");
-          // Set a global flag to indicate the menu should be shown.
           backgroundMenuVisible = true;
         }
       });
@@ -118,7 +107,6 @@ class Border {
     // Update pattern animation
     this.patternOffset += 0.005;
     
-    // Draw border background (bottom panel only)
     noStroke();
     
     // Draw starry bottom panel
@@ -176,7 +164,6 @@ class Border {
       }
       pop();
       
-      // Button label - move label down
       fill(this.buttonTextColor);
       noStroke();
       textSize(this.buttonSize * 0.25);
@@ -271,7 +258,7 @@ class Border {
     noStroke();
     
     // Use deterministic positions but random sizes for stars
-    randomSeed(42); // Consistent star pattern
+    randomSeed(42);
     
     // Bottom panel stars
     for (let i = 0; i < width; i += 20) {
@@ -295,15 +282,14 @@ class Border {
   
   // Draw vertical divider between button section and status section
   _drawSectionDivider() {
-    stroke(0, 0, 0, 40); // Semi-transparent black
+    stroke(0, 0, 0, 40); 
     strokeWeight(2);
-    const dividerX = this.statusSectionWidth; // Now the divider is after the status section
+    const dividerX = this.statusSectionWidth; 
     line(dividerX, height - this.panelHeight, dividerX, height);
   }
   
   // Draw placeholder status section
   _drawStatusSection() {
-    // Status section is on the LEFT side.
     const statusX = 10; // left margin
     const statusY = height - this.panelHeight + 10; // top inside the status panel
     
@@ -313,14 +299,9 @@ class Border {
     rectMode(CORNER);
     rect(0, height - this.panelHeight, this.statusSectionWidth, this.panelHeight);
     
-    // If currency exists, display it at a top position inside status panel
     if (typeof currency !== 'undefined') {
-      // Adjust vertical position as needed
       this._drawCurrencyStatus(this.statusSectionWidth / 2, height - this.panelHeight * 0.6);
     }
-    
-    // Draw the pet status meters below the currency display
-    this._drawPetStatus(statusX, height - this.panelHeight * 0.3);
   }
   
   _drawInnerShadow() {
@@ -420,12 +401,10 @@ class Border {
     
     // --- Draw Health Bar ---
     fill(255);
-    // Softer pastel red for health
     fill(color(255, 160, 160, 200));
     rect(x0, currentY + gap, barWidth, barHeight, cornerRadius);
     fill(color(255, 80, 80, 200));
     rect(x0, currentY + gap, barWidth * (myPet.health / 100), barHeight, cornerRadius);
-    // Text overlay
     fill(255, 0, 0, 255);
     textAlign(LEFT, CENTER);
     textSize(barHeight * 0.5);
@@ -435,7 +414,6 @@ class Border {
     
     // --- Draw Energy Bar ---
     fill(255);
-    // Softer pastel blue for energy
     fill(color(160, 160, 255, 200));
     rect(x0, currentY + gap, barWidth, barHeight, cornerRadius);
     fill(color(80, 80, 255, 200));
@@ -448,7 +426,6 @@ class Border {
     
     // --- Draw Hunger Bar ---
     fill(255);
-    // Swap: use softer pastel yellow for hunger (since it was previously used for mood)
     fill(color(255, 255, 160, 100));
     rect(x0, currentY + gap, barWidth, barHeight, cornerRadius);
     fill(color(200, 200, 80, 200));
@@ -461,7 +438,6 @@ class Border {
     
     // --- Draw Mood Bar ---
     fill(255);
-    // Swap: use softer pastel green for mood (instead of yellow)
     fill(color(180, 255, 200, 150));
     rect(x0, currentY + gap, barWidth, barHeight, cornerRadius);
     fill(color(180, 255, 80, 150));
@@ -473,7 +449,6 @@ class Border {
     currentY += barHeight + gap;
     
     // --- Draw Coin Counter ---
-    // We'll draw a coin icon and the formatted coin amount side by side.
     const coinIconSize = barHeight * 0.75; // Scale coin size based on bar height
     
     // Draw coin icon
