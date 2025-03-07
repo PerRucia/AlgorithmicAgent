@@ -7,6 +7,7 @@ let currency;
 let lastPlaytimeReward = 0;
 let house;
 let shop;
+let inventory;
 
 // Global flag for showing the backgrounds menu
 let backgroundMenuVisible = false;
@@ -18,7 +19,10 @@ function setup() {
   frameRate(60);
   
   // Create currency with initial balance
-  currency = new Currency(100);
+  currency = new Currency(9999);
+
+  // Create inventory
+  inventory = new Inventory();
   
   // Setup currency callbacks if needed
   currency.setOnBalanceChangeCallback((balance, amount, type, reason) => {
@@ -40,6 +44,7 @@ function setup() {
 
   // Create shop
   shop = new Shop();
+  shop.setReferences(inventory, currency);
 
   // Create pet at the center of the playable area
   myPet = new Pet(playArea.width / 2, playArea.height / 2);
@@ -150,49 +155,65 @@ function draw() {
   else if (shop.visible) {
     shop.display();
   }
+  else if (inventory.visible) {
+    inventory.display();
+  }
 }
 
 function mousePressed() {
-    if (backgroundMenuVisible) {
-      // Get available themes and button dimensions (same as in drawBackgroundMenu)
-      let themeKeys = Object.keys(backgrounds.themes);
-      let buttonW = width * 0.3;
-      let buttonH = 40;
-      let startY = height/2 - 50;
-      
-      // Check each button for a click.
-      for (let i = 0; i < themeKeys.length; i++) {
-        let btnX = width/2 - buttonW/2;
-        let btnY = startY + i * (buttonH + 10);
-        if (mouseX > btnX && mouseX < btnX + buttonW &&
-            mouseY > btnY && mouseY < btnY + buttonH) {
-          // Set the background to the chosen theme.
+  if (backgroundMenuVisible) {
+    let themeKeys = Object.keys(backgrounds.themes);
+    let buttonW = width * 0.3;
+    let buttonH = 40;
+    let startY = height / 2 - 50;
+    
+    // Check the inventory to see which backgrounds are unlocked.
+    let unlockedBackgrounds = inventory.getItems("backgrounds");
+    
+    for (let i = 0; i < themeKeys.length; i++) {
+      let btnX = width / 2 - buttonW / 2;
+      let btnY = startY + i * (buttonH + 10);
+      if (
+        mouseX > btnX && mouseX < btnX + buttonW &&
+        mouseY > btnY && mouseY < btnY + buttonH
+      ) {
+        // Check if the background is unlocked by looking into the inventory.
+        let unlocked = false;
+        for (let j = 0; j < unlockedBackgrounds.length; j++) {
+          if (unlockedBackgrounds[j].id === themeKeys[i]) {
+            unlocked = true;
+            break;
+          }
+        }
+        if (!unlocked) {
+          console.log(`Theme "${themeKeys[i]}" is locked.`);
+        } else {
           backgrounds.setTheme(themeKeys[i]);
           console.log(`Background set to: ${themeKeys[i]}`);
           backgroundMenuVisible = false;
-          return false;
         }
+        return false;
       }
-      // If click outside buttons, close the menu.
-      backgroundMenuVisible = false;
-      return false;
     }
-    else if (shop.visible) {
-      // Handle shop interaction
-      shop.handleMousePressed(mouseX, mouseY);
-      return false;
-    }
-    
-    // Otherwise, handle mouse press normally.
-    interactHandler.handleMousePressed(mouseX, mouseY);
-    return false; // Prevent default
+    // If click outside buttons, close the menu.
+    backgroundMenuVisible = false;
+    return false;
+  } 
+  else if (shop.visible) {
+    shop.handleMousePressed(mouseX, mouseY);
+    return false;
   }
+  else if (inventory.visible) {
+    inventory.handleMousePressed(mouseX, mouseY);
+    return false;
+  }
+  interactHandler.handleMousePressed(mouseX, mouseY);
+  return false; // Prevent default behavior
+}
 
 function touchStarted() {
-  if (touches.length > 0) {
-    interactHandler.handleTouchStart(touches[0].x, touches[0].y);
-  }
-  return false; // Prevent default
+  // Call mousePressed() when touch starts
+  mousePressed();
 }
 
 function touchMoved() {
@@ -211,36 +232,60 @@ function touchEnded() {
 
 // Draw the overlay menu for background themes.
 function drawBackgroundMenu() {
-  // Draw semi-transparent overlay
-  push();
-  fill(0, 150);
-  noStroke();
-  rect(0, 0, width, height);
-  
-  // Title
-  fill(255);
-  textAlign(CENTER, CENTER);
-  textSize(24);
-  text("Select Background Theme", width/2, height/2 - 100);
-  
-  // Get available themes from the backgrounds object.
-  let themeKeys = Object.keys(backgrounds.themes);
-  let buttonW = width * 0.3;
-  let buttonH = 40;
-  let startY = height/2 - 50;
-  
-  for (let i = 0; i < themeKeys.length; i++) {
-    let btnX = width/2 - buttonW/2;
-    let btnY = startY + i * (buttonH + 10);
-    // Draw button
-    fill(200);
-    rect(btnX, btnY, buttonW, buttonH, 5);
-    fill(0);
-    textSize(20);
-    text(themeKeys[i], width/2, btnY + buttonH/2);
+    push();
+    // Draw semi-transparent overlay
+    fill(0, 150);
+    noStroke();
+    rect(0, 0, width, height);
+    
+    // Title
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(24);
+    text("Select Background Theme", width / 2, height / 2 - 100);
+    
+    // Get available themes from the backgrounds object.
+    let themeKeys = Object.keys(backgrounds.themes);
+    let buttonW = width * 0.3;
+    let buttonH = 40;
+    let startY = height / 2 - 50;
+    
+    // Get the user's unlocked background themes from inventory.
+    let unlockedBackgrounds = inventory.getItems("backgrounds"); // array of backgrounds
+    
+    for (let i = 0; i < themeKeys.length; i++) {
+      let btnX = width / 2 - buttonW / 2;
+      let btnY = startY + i * (buttonH + 10);
+      
+      // Draw button base
+      fill(200);
+      rect(btnX, btnY, buttonW, buttonH, 5);
+      
+      // Check if this theme is unlocked:
+      let unlocked = false;
+      for (let j = 0; j < unlockedBackgrounds.length; j++) {
+        if (unlockedBackgrounds[j].id === themeKeys[i]) {
+          unlocked = true;
+          break;
+        }
+      }
+      
+      if (!unlocked) {
+        // Overlay with grey and lock symbol if not unlocked.
+        fill(120, 120, 120, 150);
+        rect(btnX, btnY, buttonW, buttonH, 5);
+        
+        fill(255);
+        textSize(30);
+        text("🔒", width / 2, btnY + buttonH / 2);
+      } else {
+        fill(0);
+        textSize(20);
+        text(themeKeys[i], width / 2, btnY + buttonH / 2);
+      }
+    }
+    pop();
   }
-  pop();
-}
 
 // Update the windowResized function to include house resizing
 function windowResized() {

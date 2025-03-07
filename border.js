@@ -82,6 +82,7 @@ class Border {
       type: "inventory",
       isHovered: false,
       action: () => {
+        inventory.toggleVisibility();
         console.log("Inventory button clicked");
         // Add inventory functionality here
       }
