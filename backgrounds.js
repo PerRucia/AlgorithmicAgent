@@ -2,14 +2,6 @@ class Backgrounds {
   constructor() {
     // Available background themes
     this.themes = {
-      'night': {
-        name: 'Night Sky',
-        mainColor: color(20, 24, 82),
-        floorColor: color(30, 34, 102),
-        particleColor: color(255, 255, 255),
-        particleCount: 100,
-        description: 'A peaceful starry night'
-      },
       'day': {
         name: 'Sunny Day',
         mainColor: color(135, 206, 235),
@@ -17,6 +9,14 @@ class Backgrounds {
         particleColor: color(255, 255, 255),
         particleCount: 10,
         description: 'Bright blue skies and green grass'
+      },
+      'night': {
+        name: 'Night Sky',
+        mainColor: color(20, 24, 82),
+        floorColor: color(30, 34, 102),
+        particleColor: color(255, 255, 255),
+        particleCount: 100,
+        description: 'A peaceful starry night'
       },
       'space': {
         name: 'Outer Space',
@@ -37,7 +37,7 @@ class Backgrounds {
     };
     
     // Default theme
-    this.currentTheme = 'night';
+    this.currentTheme = 'day';
     
     // Particles for dynamic backgrounds
     this.particles = [];

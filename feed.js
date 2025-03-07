@@ -7,7 +7,7 @@ class Feed {
       this.outlineColor = color(80);
       
       // This single variable controls the table scale relative to the playable area's width.
-      this.tableScale = 0.10;
+      this.tableScale = 0.20;
     }
     
     // Display the food table in the bottom left of the playable area.

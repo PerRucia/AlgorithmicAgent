@@ -88,30 +88,19 @@ class Border {
   
     // Create backgrounds button
     this.buttons.push({
-      x: backgroundsX,
-      y: buttonY,
-      width: this.buttonSize,
-      height: this.buttonSize,
-      label: "Themes",
-      type: "backgrounds",
-      isHovered: false,
-      action: () => {
-        console.log("Themes button clicked - changing background");
-        
-        // Make sure the backgrounds reference exists
-        if (typeof backgrounds !== 'undefined') {
-          // Get the next theme in rotation and set it
-          const nextTheme = backgrounds.getNextTheme();
-          backgrounds.setTheme(nextTheme);
-          
-          // Show theme change message
-          const themeName = backgrounds.themes[nextTheme].name;
-          console.log(`Theme changed to: ${themeName}`);
-        } else {
-          console.error("Backgrounds reference not found!");
+        x: backgroundsX,
+        y: buttonY,
+        width: this.buttonSize,
+        height: this.buttonSize,
+        label: "Themes",
+        type: "backgrounds",
+        isHovered: false,
+        action: () => {
+          console.log("Themes button clicked - opening menu");
+          // Set a global flag to indicate the menu should be shown.
+          backgroundMenuVisible = true;
         }
-      }
-    });
+      });
   }
   
   setColor(r, g, b, a = 255) {
