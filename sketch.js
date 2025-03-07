@@ -1,6 +1,6 @@
 let myPet;
 let myBorder;
-let myFeed;
+let feed;
 let backgrounds;
 let interactHandler;
 let currency;
@@ -12,6 +12,9 @@ let inventory;
 // Global flag for showing the backgrounds menu
 let backgroundMenuVisible = false;
 
+// Global flag for checking for game over
+let gameOver = false;
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
   
@@ -19,7 +22,7 @@ function setup() {
   frameRate(60);
   
   // Create currency with initial balance
-  currency = new Currency(9999);
+  currency = new Currency(900);
 
   // Create inventory
   inventory = new Inventory();
@@ -40,7 +43,7 @@ function setup() {
   let playArea = myBorder.getPlayableArea();
 
   // Create feed and position it in the bottom left
-  myFeed = new Feed();
+  feed = new Feed();
 
   // Create shop
   shop = new Shop();
@@ -127,7 +130,7 @@ function draw() {
   backgrounds.draw(playArea);
   
   // Draw the food table (Feed) in the bottom left of the playable area.
-  myFeed.display(playArea);
+  feed.display(playArea);
   
   // Draw the house (should appear on top of the background)
   house.display(playArea);
@@ -161,6 +164,9 @@ function draw() {
 }
 
 function mousePressed() {
+  if (gameOver) {
+    return false;
+  }
   if (backgroundMenuVisible) {
     let themeKeys = Object.keys(backgrounds.themes);
     let buttonW = width * 0.3;
@@ -217,6 +223,9 @@ function touchStarted() {
 }
 
 function touchMoved() {
+  if (gameOver) {
+    return false;
+  }
   if (touches.length > 0) {
     interactHandler.handleTouchMove(touches[0].x, touches[0].y);
   }

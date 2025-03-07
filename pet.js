@@ -4,7 +4,7 @@ class Pet {
     this.y = y;
     
     // Base size will be adjusted based on play area dimensions
-    this.baseSize = 100;
+    this.baseSize = 80;
     this.size = this.baseSize; // Initial size, will be adjusted in setBoundaries
     
     // Size scaling factors
@@ -61,6 +61,8 @@ class Pet {
     this.energy = 100;  // Energy meter (0 to 100)
     this.hunger = 0;    // Hunger meter (0 to 100, where low means not hungry)
     this.mood = 100;    // Mood meter (0 to 100)
+    this.isDead = false;
+
   }
   
   // Update setBoundaries to scale pet based on play area dimensions
@@ -152,14 +154,19 @@ class Pet {
       noStroke();
     }
 
-    fill(255, 150, 150, 100);
-    ellipse(-this.size * 0.3, this.size * 0.05, this.size * 0.15, this.size * 0.1);
-    ellipse(this.size * 0.3, this.size * 0.05, this.size * 0.15, this.size * 0.1);
-
-    fill(0);
-    arc(0, this.size * 0.1, this.size * 0.3, this.size * 0.2, 0, PI);
-    fill(255, 150, 150);
-    arc(0, this.size * 0.1, this.size * 0.2, this.size * 0.1, 0, PI);
+    // Draw mouth: check for extreme status values
+    if (this.energy === 0 || this.mood === 0 || this.hunger === 100) {
+      // Extreme values: draw a frown
+      fill(0);
+      // Draw an inverted arc (frown) lower on the face
+      arc(0, this.size * 0.25, this.size * 0.3, this.size * 0.2, PI, TWO_PI);
+    } else {
+      // Normal: draw a smile
+      fill(0);
+      arc(0, this.size * 0.1, this.size * 0.3, this.size * 0.2, 0, PI);
+      fill(255, 150, 150);
+      arc(0, this.size * 0.1, this.size * 0.2, this.size * 0.1, 0, PI);
+    }
 
     pop();
   }
@@ -315,16 +322,16 @@ class Pet {
       
       // Mood decays normally, but if energy is 0 it decays twice as fast.
       if (this.energy === 0) {
-        this.mood = max(0, this.mood - 0.4);
-      } else {
         this.mood = max(0, this.mood - 0.2);
+      } else {
+        this.mood = max(0, this.mood - 0.1);
       }
       
-      // Hunger increases slowly (0 means full, 100 = starving)
-      this.hunger = min(100, this.hunger + 0.025);
+      // Hunger increases slowly (0 = full, 100 = starving)
+      this.hunger = min(100, this.hunger + 0.1);
     }
     
-    // Process scheduled heart additions (existing logic)
+    // Process scheduled heart additions...
     const currentTime = millis();
     for (let i = this.heartSchedule.length - 1; i >= 0; i--) {
       if (currentTime >= this.heartSchedule[i].time) {
@@ -338,16 +345,68 @@ class Pet {
     }
     
     // --- Health Decay Logic ---
-    // Count how many meters are "depleted"
-    // For energy and mood, 0 is depleted.
-    // For hunger, 100 means starving.
     let decayCount = 0;
     if (this.energy === 0) decayCount++;
     if (this.mood === 0) decayCount++;
     if (this.hunger === 100) decayCount++;
+    this.health = max(0, this.health - 0.01 * decayCount);
+
+    // Check if pet's health has reached 0.
+    if (this.health <= 0 && !this.isDead) {
+      this.die();
+    }
+
+    // --- Auto-Feed Logic ---
+    // When hunger goes above 75, move near the feed table and feed, if not already feeding.
+    if (this.hunger > 75 && feed.foodServings > 0) {
+      this.autoFeed();
+    }
+  }
+  
+  // New method: autoFeed
+  autoFeed() {
+    feed.eat();
+    // Show a text box in the center of the screen, a little bit off the top, for 3 sec that says "Pet is eating!"
+    let feedText = createDiv("Pet is eating!");
+    feedText.position(width / 2, height * 0.1);
+    feedText.style("font-size", "24px");
+    feedText.style("font-family", "sans-serif");
+    feedText.style("color", "#000");
+    feedText.style("background-color", "rgba(255, 255, 255, 0.8)");
+    feedText.style("padding", "10px");
+    feedText.style("border-radius", "10px");
+    feedText.style("position", "absolute");
+    feedText.style("transform", "translateX(-50%)");
+    feedText.style("z-index", "1");
+    setTimeout(() => {
+      feedText.remove();
+    }, 2000);
+
+    // Reset hunger to 0 after feeding
+    this.hunger = 0;
+    currency.addCoins(5, "Feed pet");
+  }
+
+  die() {
+    this.isDead = true;
+    // Set a global flag so other input handlers (e.g., in Border) can ignore inputs.
+    gameOver = true;
     
-    // Decrease health by 0.001 per depleted meter.
-    this.health = max(0, this.health - 0.002 * decayCount);
+    // Create a full-screen overlay to darken the screen and show the death message.
+    let deathOverlay = createDiv("Your pet has died!<br>Try again?");
+    deathOverlay.position(0, 0);
+    deathOverlay.style("width", "100%");
+    deathOverlay.style("height", "100%");
+    deathOverlay.style("background-color", "rgba(0, 0, 0, 0.8)");
+    deathOverlay.style("color", "white");
+    deathOverlay.style("font-size", "36px");
+    deathOverlay.style("display", "flex");
+    deathOverlay.style("justify-content", "center");
+    deathOverlay.style("align-items", "center");
+    deathOverlay.style("text-align", "center");
+    deathOverlay.style("z-index", "10000");
+    // This overlay captures all pointer events.
+    deathOverlay.style("pointer-events", "auto");
   }
   
   // Update the interact method to account for scaled size
@@ -380,7 +439,7 @@ class Pet {
       );
       
       // Spend a little energy and restore a bit of mood.
-      this.energy = max(0, this.energy - 5);
+      this.energy = max(0, this.energy - 3);
       this.mood = min(100, this.mood + 20);
       
       return true;

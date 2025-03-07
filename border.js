@@ -425,7 +425,13 @@ class Border {
     rect(x0, currentY + gap, barWidth, barHeight, cornerRadius);
     fill(color(255, 80, 80, 200));
     rect(x0, currentY + gap, barWidth * (myPet.health / 100), barHeight, cornerRadius);
+    // Text overlay
+    fill(255, 0, 0, 255);
+    textAlign(LEFT, CENTER);
+    textSize(barHeight * 0.5);
+    text("Health", x0 + 5, currentY + gap + barHeight / 2);
     currentY += barHeight + gap;
+
     
     // --- Draw Energy Bar ---
     fill(255);
@@ -434,24 +440,36 @@ class Border {
     rect(x0, currentY + gap, barWidth, barHeight, cornerRadius);
     fill(color(80, 80, 255, 200));
     rect(x0, currentY + gap, barWidth * (myPet.energy / 100), barHeight, cornerRadius);
+    fill(0, 0, 255, 255);
+    textAlign(LEFT, CENTER);
+    textSize(barHeight * 0.5);
+    text("Energy", x0 + 5, currentY + gap + barHeight / 2);
     currentY += barHeight + gap;
     
     // --- Draw Hunger Bar ---
     fill(255);
     // Swap: use softer pastel yellow for hunger (since it was previously used for mood)
-    fill(color(255, 255, 160, 200));
+    fill(color(255, 255, 160, 100));
     rect(x0, currentY + gap, barWidth, barHeight, cornerRadius);
-    fill(color(255, 255, 80, 200));
+    fill(color(200, 200, 80, 200));
     rect(x0, currentY + gap, barWidth * ((100 - myPet.hunger) / 100), barHeight, cornerRadius);
+    fill(255, 255, 0, 255);
+    textAlign(LEFT, CENTER);
+    textSize(barHeight * 0.5);
+    text("Hunger", x0 + 5, currentY + gap + barHeight / 2);
     currentY += barHeight + gap;
     
     // --- Draw Mood Bar ---
     fill(255);
     // Swap: use softer pastel green for mood (instead of yellow)
-    fill(color(180, 255, 200, 200));
+    fill(color(180, 255, 200, 150));
     rect(x0, currentY + gap, barWidth, barHeight, cornerRadius);
-    fill(color(180, 255, 80, 200));
+    fill(color(180, 255, 80, 150));
     rect(x0, currentY + gap, barWidth * (myPet.mood / 100), barHeight, cornerRadius);
+    fill(0, 255, 0, 255);
+    textAlign(LEFT, CENTER);
+    textSize(barHeight * 0.5);
+    text("Mood", x0 + 5, currentY + gap + barHeight / 2);
     currentY += barHeight + gap;
     
     // --- Draw Coin Counter ---
