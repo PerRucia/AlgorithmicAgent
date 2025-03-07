@@ -295,6 +295,29 @@ class Inventory {
   toggleVisibility() {
     this.visible = !this.visible;
   }
+
+  // Add this method to the Inventory class
+  reset() {
+    // Two categories: food and backgrounds
+    this.items = {
+      food: [],
+      backgrounds: []
+    };
+    // Add the default day background.
+    this.items.backgrounds.push({ id: "day", name: "Day", description: "A bright sunny day." });
+    // Add a default apple food item (unlimited by default).
+    this.items.food.push({
+      id: "apple",
+      name: "Apple",
+      description: "A healthy apple to keep your pet happy.",
+      servings: 1,
+      quantity: "∞"
+    });
+    // For inventory menu overlay.
+    this.selectedCategory = "food";
+    this.visible = false;
+    console.log("Inventory reset to default state");
+  }
   
   // Handle taps while the inventory menu is visible.
   // Returns true if the tap was on a tab.

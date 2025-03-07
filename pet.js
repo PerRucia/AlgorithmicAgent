@@ -138,7 +138,28 @@ class Pet {
     ellipse(0, 0, this.size, this.size * 0.8);
 
     // -- Draw Face --
-    if (!this.isBlinking) {
+    if (this.isDead) {
+      // Draw X eyes when pet is dead
+      stroke(0);
+      strokeWeight(3 * this.sizeFactor);
+      
+      // Left X eye
+      line(-this.size * 0.25, -this.size * 0.15, -this.size * 0.15, -this.size * 0.05);
+      line(-this.size * 0.15, -this.size * 0.15, -this.size * 0.25, -this.size * 0.05);
+      
+      // Right X eye
+      line(this.size * 0.15, -this.size * 0.15, this.size * 0.25, -this.size * 0.05);
+      line(this.size * 0.25, -this.size * 0.15, this.size * 0.15, -this.size * 0.05);
+      
+      noStroke();
+      
+      // Draw a flat line for the mouth
+      stroke(0);
+      strokeWeight(3 * this.sizeFactor);
+      line(-this.size * 0.15, this.size * 0.2, this.size * 0.15, this.size * 0.2);
+      noStroke();
+    } 
+    else if (!this.isBlinking) {
       fill(255);
       ellipse(-this.size * 0.2, -this.size * 0.1, this.size * 0.2, this.size * 0.2);
       ellipse(this.size * 0.2, -this.size * 0.1, this.size * 0.2, this.size * 0.2);
@@ -154,18 +175,21 @@ class Pet {
       noStroke();
     }
 
-    // Draw mouth: check for extreme status values
-    if (this.energy === 0 || this.mood === 0 || this.hunger === 100) {
-      // Extreme values: draw a frown
-      fill(0);
-      // Draw an inverted arc (frown) lower on the face
-      arc(0, this.size * 0.25, this.size * 0.3, this.size * 0.2, PI, TWO_PI);
-    } else {
-      // Normal: draw a smile
-      fill(0);
-      arc(0, this.size * 0.1, this.size * 0.3, this.size * 0.2, 0, PI);
-      fill(255, 150, 150);
-      arc(0, this.size * 0.1, this.size * 0.2, this.size * 0.1, 0, PI);
+    // Draw mouth (only if not dead)
+    if (!this.isDead) {
+      // Draw mouth: check for extreme status values
+      if (this.energy === 0 || this.mood === 0 || this.hunger === 100) {
+        // Extreme values: draw a frown
+        fill(0);
+        // Draw an inverted arc (frown) lower on the face
+        arc(0, this.size * 0.25, this.size * 0.3, this.size * 0.2, PI, TWO_PI);
+      } else {
+        // Normal: draw a smile
+        fill(0);
+        arc(0, this.size * 0.1, this.size * 0.3, this.size * 0.2, 0, PI);
+        fill(255, 150, 150);
+        arc(0, this.size * 0.1, this.size * 0.2, this.size * 0.1, 0, PI);
+      }
     }
 
     pop();
@@ -349,7 +373,7 @@ class Pet {
     if (this.energy === 0) decayCount++;
     if (this.mood === 0) decayCount++;
     if (this.hunger === 100) decayCount++;
-    this.health = max(0, this.health - 0.01 * decayCount);
+    this.health = max(0, this.health - 0.2 * decayCount);
 
     // Check if pet's health has reached 0.
     if (this.health <= 0 && !this.isDead) {
@@ -405,8 +429,83 @@ class Pet {
     deathOverlay.style("align-items", "center");
     deathOverlay.style("text-align", "center");
     deathOverlay.style("z-index", "10000");
+    deathOverlay.style("flex-direction", "column"); // Stack elements vertically
     // This overlay captures all pointer events.
     deathOverlay.style("pointer-events", "auto");
+    
+    // Create a reset button
+    let resetButton = createButton("Reset Game");
+    resetButton.parent(deathOverlay);
+    resetButton.style("font-size", "24px");
+    resetButton.style("padding", "12px 30px");
+    resetButton.style("margin-top", "30px");
+    resetButton.style("background-color", "#4CAF50");
+    resetButton.style("color", "white");
+    resetButton.style("border", "none");
+    resetButton.style("border-radius", "8px");
+    resetButton.style("cursor", "pointer");
+    resetButton.style("transition", "background-color 0.3s");
+    
+    // Hover effect
+    resetButton.mouseOver(() => {
+      resetButton.style("background-color", "#45a049");
+    });
+    
+    resetButton.mouseOut(() => {
+      resetButton.style("background-color", "#4CAF50");
+    });
+    
+    // Add click event to reset the game
+    resetButton.mousePressed(() => {
+      this.resetGame(deathOverlay);
+    });
+  }
+
+  resetGame(deathOverlay) {
+    // Reset pet's stats
+    this.health = 100;
+    this.energy = 100;
+    this.hunger = 0;
+    this.mood = 100;
+    this.isDead = false;
+    
+    // Reset game state
+    gameOver = false;
+    
+    // Reset currency to starting amount
+    currency.resetBalance(900);
+    
+    // Reset inventory (clear purchased items)
+    inventory.reset();
+
+    // Reset shop (close shop and reset prices)
+    shop.reset();
+
+    // Reset backgrounds to default theme
+    backgrounds.setTheme("day");
+    
+    // Reset pet position to center of play area
+    let playArea = myBorder.getPlayableArea();
+    this.x = playArea.width / 2;
+    this.y = playArea.height / 2;
+    this.targetX = this.x;
+    this.targetY = this.y;
+    
+    // Make sure pet is not in house
+    if (house.isPetResting() && house.occupiedBy === this) {
+      house.petLeave();
+    }
+    
+    // Reset to default background theme
+    backgrounds.setTheme("default");
+    
+    // Reset feed
+    feed.foodServings = 5;
+    
+    // Remove the death overlay
+    deathOverlay.remove();
+    
+    console.log("Game reset!");
   }
   
   // Update the interact method to account for scaled size

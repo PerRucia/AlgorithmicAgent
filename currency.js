@@ -57,6 +57,15 @@ class Currency {
       console.log(`Spent ${amount} coins (${reason}). New balance: ${this.balance}`);
       return true;
     }
+
+    // Add this method to the Currency class
+    resetBalance(amount) {
+      this.balance = amount;
+      if (this.onBalanceChangeCallback) {
+        this.onBalanceChangeCallback(this.balance, amount, "reset", "Game reset");
+      }
+      console.log(`Currency reset to ${amount}`);
+    }
     
     // Get current balance
     getBalance() {

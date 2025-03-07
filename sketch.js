@@ -44,6 +44,7 @@ function setup() {
 
   // Create feed and position it in the bottom left
   feed = new Feed();
+  feed.foodServings = 5; 
 
   // Create shop
   shop = new Shop();

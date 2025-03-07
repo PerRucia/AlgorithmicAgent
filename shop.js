@@ -357,6 +357,18 @@ class Shop {
     text(this.purchaseDialogMessage, dx + margin, dy + margin, dialogWidth - margin * 2, dialogHeight - margin * 2);
     pop();
   }
+
+  reset() {
+    // Restock each background item.
+    this.backgroundItems.forEach(item => {
+      item.stock = 1;
+    });
+    // Optionally hide the shop and reset detail/purchase dialog states.
+    this.visible = false;
+    this.detailWindowVisible = false;
+    this.purchaseDialogVisible = false;
+    console.log("Shop has been reset.");
+  }
   
   // Handle mouse/touch presses in the shop.
   handleMousePressed(x, y) {
