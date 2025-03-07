@@ -1,5 +1,6 @@
 let myPet;
 let myBorder;
+let myFeed;
 let backgrounds;
 let interactHandler;
 let currency;
@@ -30,6 +31,9 @@ function setup() {
   // Get playable area
   let playArea = myBorder.getPlayableArea();
 
+  // Create feed and position it in the bottom left
+  myFeed = new Feed();
+
   // Create pet at the center of the playable area
   myPet = new Pet(playArea.width / 2, playArea.height / 2);
   myPet.setBoundaries(0, 0, playArea.width, playArea.height);
@@ -45,9 +49,6 @@ function setup() {
   
   // Set up interaction callbacks
   setupInteractionCallbacks();
-  
-  // Award initial login bonus
-  currency.awardDailyBonus(100);
 }
 
 function setupInteractionCallbacks() {
@@ -55,7 +56,7 @@ function setupInteractionCallbacks() {
     onPetInteract: (x, y) => {
       console.log("Pet interaction detected!");
       // Award a small coin bonus for interacting with pet
-      currency.awardInteractionBonus(5);
+      currency.awardInteractionBonus(1);
     },
     onBorderInteract: (x, y) => {
       console.log("Border interaction detected");
@@ -97,10 +98,6 @@ function setupInteractionCallbacks() {
       // If dragging near the pet (active), make it follow the drag.
       let d = dist(x, y, myPet.x, myPet.y);
       if (d < myPet.size) {
-        // If pet is resting, make it leave the house.
-        if (house.isPetResting()) {
-          house.petLeave();
-        }
         myPet.x = constrain(x, myPet.minX, myPet.maxX);
         myPet.y = constrain(y, myPet.minY, myPet.maxY);
         myPet.targetX = myPet.x;
@@ -116,10 +113,13 @@ function draw() {
   
   // Draw the current background theme
   backgrounds.draw(playArea);
+
+  // Draw the food bowl (Feed) in the bottom left of the playable area.
+  myFeed.display(playArea);
   
   // Draw the house (it should appear on top of the background)
   house.display(playArea);
-  
+
   // Check if mouse is over house
   if (house.contains(mouseX, mouseY)) {
     house.setHover(true);
@@ -137,13 +137,7 @@ function draw() {
   
   // Display the border
   myBorder.display();
-  
-  // Check for playtime rewards (every minute)
-  const currentTime = millis();
-  if (currentTime - lastPlaytimeReward > 60000) { // 1 minute
-    currency.awardPlaytimeBonus(1);
-    lastPlaytimeReward = currentTime;
-  }
+
 }
 
 function mousePressed() {

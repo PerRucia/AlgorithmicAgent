@@ -430,6 +430,8 @@ class Border {
     // --- Draw Health Bar ---
     fill(255);
     // Softer pastel red for health
+    fill(color(255, 160, 160, 200));
+    rect(x0, currentY + gap, barWidth, barHeight, cornerRadius);
     fill(color(255, 80, 80, 200));
     rect(x0, currentY + gap, barWidth * (myPet.health / 100), barHeight, cornerRadius);
     currentY += barHeight + gap;
@@ -437,6 +439,8 @@ class Border {
     // --- Draw Energy Bar ---
     fill(255);
     // Softer pastel blue for energy
+    fill(color(160, 160, 255, 200));
+    rect(x0, currentY + gap, barWidth, barHeight, cornerRadius);
     fill(color(80, 80, 255, 200));
     rect(x0, currentY + gap, barWidth * (myPet.energy / 100), barHeight, cornerRadius);
     currentY += barHeight + gap;
@@ -444,14 +448,17 @@ class Border {
     // --- Draw Hunger Bar ---
     fill(255);
     // Swap: use softer pastel yellow for hunger (since it was previously used for mood)
+    fill(color(255, 255, 160, 200));
+    rect(x0, currentY + gap, barWidth, barHeight, cornerRadius);
     fill(color(255, 255, 80, 200));
-    // Note: 0 means full, so fill bar with (100 - hunger) fraction
     rect(x0, currentY + gap, barWidth * ((100 - myPet.hunger) / 100), barHeight, cornerRadius);
     currentY += barHeight + gap;
     
     // --- Draw Mood Bar ---
     fill(255);
     // Swap: use softer pastel green for mood (instead of yellow)
+    fill(color(180, 255, 200, 200));
+    rect(x0, currentY + gap, barWidth, barHeight, cornerRadius);
     fill(color(180, 255, 80, 200));
     rect(x0, currentY + gap, barWidth * (myPet.mood / 100), barHeight, cornerRadius);
     currentY += barHeight + gap;

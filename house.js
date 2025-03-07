@@ -5,7 +5,7 @@ class House {
     this.y = 0;
     this.width = 120;
     this.height = 100;
-    this.baseSize = 300; // Reference size to scale with screen
+    this.baseSize = 200; // Reference size to scale with screen
     
     // Style properties
     this.roofColor = color(170, 90, 60);
@@ -356,6 +356,8 @@ class House {
       // Pet is resting: let it leave.
       this.petLeave();
       console.log("House tapped: pet is leaving the house.");
+      this.pet.x = this.pet.targetX;
+      this.pet.y = this.pet.targetY;
     } else if (this.pet) {
       // Pet is not resting and available to rest.
       // Send the pet into the house.

@@ -80,19 +80,8 @@ class Currency {
         .reverse(); // Most recent first
     }
     
-    // Award daily login bonus
-    awardDailyBonus(amount = 50) {
-      return this.addCoins(amount, "daily login bonus");
-    }
-    
     // Award pet interaction bonus
     awardInteractionBonus(amount = 5) {
       return this.addCoins(amount, "pet interaction");
-    }
-    
-    // Earn coins for playtime
-    awardPlaytimeBonus(minutes = 5, coinsPerMinute = 1) {
-      const amount = minutes * coinsPerMinute;
-      return this.addCoins(amount, `played for ${minutes} minutes`);
     }
   }

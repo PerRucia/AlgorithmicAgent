@@ -61,9 +61,6 @@ class Pet {
     this.energy = 100;  // Energy meter (0 to 100)
     this.hunger = 0;    // Hunger meter (0 to 100, where low means not hungry)
     this.mood = 100;    // Mood meter (0 to 100)
-
-    // Resting properties
-    this.isR
   }
   
   // Update setBoundaries to scale pet based on play area dimensions
@@ -287,10 +284,9 @@ class Pet {
   }
   
   update() {
-    // Existing update logic
+    // Existing update logic: wobble, blinking, squish, etc.
     this.wobble += this.wobbleSpeed;
     
-    // Blinking logic
     this.blinkTimer++;
     if (this.blinkTimer > 120 && !this.isBlinking) {
       this.isBlinking = true;
@@ -300,29 +296,32 @@ class Pet {
       this.blinkTimer = 0;
     }
     
-    // Update squish animation if active
     this.updateSquish();
     
-    // --- Energy and Mood Decay / Recovery Logic ---
+    // --- Energy, Mood, and Hunger Update Logic ---
     if (typeof house !== 'undefined' && house.isPetResting() && house.occupiedBy === this) {
-      // Pet is resting: restore energy only; mood remains unchanged.
-      this.energy = min(100, this.energy + 0.2);
+      // Pet is resting: restore energy only, leave mood and hunger unchanged.
+      this.energy = min(100, this.energy + 0.25);
       if (this.energy >= 100) {
         house.petLeave(); // Automatically leave when energy is full.
         console.log("Energy restored; pet is leaving the house.");
-        // Reposition pet at its default target
+        // Reposition pet at its default active target.
         this.x = this.targetX;
         this.y = this.targetY;
       }
     } else {
-      // Pet is active: decay both energy and mood.
+      // Pet is active: update all meters.
       this.energy = max(0, this.energy - 0.05);
+      
+      // Mood decays normally, but if energy is 0 it decays twice as fast.
       if (this.energy === 0) {
-        // When energy is fully drained, mood decays twice as fast.
-        this.mood = max(0, this.mood - 0.02);
+        this.mood = max(0, this.mood - 0.4);
       } else {
-        this.mood = max(0, this.mood - 0.01);
+        this.mood = max(0, this.mood - 0.2);
       }
+      
+      // Hunger increases slowly (0 means full, 100 = starving)
+      this.hunger = min(100, this.hunger + 0.025);
     }
     
     // Process scheduled heart additions (existing logic)
@@ -337,32 +336,52 @@ class Pet {
         this.heartSchedule.splice(i, 1);
       }
     }
+    
+    // --- Health Decay Logic ---
+    // Count how many meters are "depleted"
+    // For energy and mood, 0 is depleted.
+    // For hunger, 100 means starving.
+    let decayCount = 0;
+    if (this.energy === 0) decayCount++;
+    if (this.mood === 0) decayCount++;
+    if (this.hunger === 100) decayCount++;
+    
+    // Decrease health by 0.001 per depleted meter.
+    this.health = max(0, this.health - 0.002 * decayCount);
   }
   
   // Update the interact method to account for scaled size
   interact(mouseX, mouseY) {
-    // Do not allow interaction if pet is resting.
-    if (typeof house !== 'undefined' && house.isPetResting() && house.occupiedBy === this) {
-       return false;
+    // Prevent interaction if pet's energy is zero
+    if (this.energy === 0) {
+      console.log("Cannot interact: pet’s energy is depleted.");
+      return false;
     }
     
-    // Existing hit detection using scaled size:
+    // Also ignore interaction if pet is resting in the house.
+    if (typeof house !== 'undefined' && house.isPetResting() && house.occupiedBy === this) {
+      return false;
+    }
+    
+    // Hit detection using scaled size:
     let d = dist(mouseX, mouseY, this.x, this.y);
     if (d < this.size * 0.5) {
       console.log("Pet interacted with!");
       
-      // Start squish effect
+      // Trigger squish effect and add a heart.
       this.startSquish();
-      
-      // Add a floating heart
       this.addHeart();
       
-      // Schedule more hearts (instead of setTimeout)
+      // Schedule additional hearts.
       const currentTime = millis();
       this.heartSchedule.push(
         { time: currentTime + 100, colorful: false },
         { time: currentTime + 200, colorful: false }
       );
+      
+      // Spend a little energy and restore a bit of mood.
+      this.energy = max(0, this.energy - 5);
+      this.mood = min(100, this.mood + 20);
       
       return true;
     }
