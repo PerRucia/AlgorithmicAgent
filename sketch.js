@@ -6,6 +6,7 @@ let interactHandler;
 let currency;
 let lastPlaytimeReward = 0;
 let house;
+let shop;
 
 // Global flag for showing the backgrounds menu
 let backgroundMenuVisible = false;
@@ -36,6 +37,9 @@ function setup() {
 
   // Create feed and position it in the bottom left
   myFeed = new Feed();
+
+  // Create shop
+  shop = new Shop();
 
   // Create pet at the center of the playable area
   myPet = new Pet(playArea.width / 2, playArea.height / 2);
@@ -143,6 +147,9 @@ function draw() {
   if (backgroundMenuVisible) {
     drawBackgroundMenu();
   }
+  else if (shop.visible) {
+    shop.display();
+  }
 }
 
 function mousePressed() {
@@ -168,6 +175,11 @@ function mousePressed() {
       }
       // If click outside buttons, close the menu.
       backgroundMenuVisible = false;
+      return false;
+    }
+    else if (shop.visible) {
+      // Handle shop interaction
+      shop.handleMousePressed(mouseX, mouseY);
       return false;
     }
     

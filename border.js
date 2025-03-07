@@ -66,6 +66,7 @@ class Border {
       type: "shop",
       isHovered: false,
       action: () => {
+        shop.toggleVisibility();
         console.log("Shop button clicked");
         // Add shop functionality here
       }
