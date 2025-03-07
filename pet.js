@@ -12,19 +12,8 @@ class Pet {
     this.maxSizeFactor = 1.5; // Maximum size as a fraction of baseSize
     this.sizeFactor = 1.0;    // Current size factor, will adjust based on play area
 
-    // Predefined color sequence
-    this.colorOptions = [
-      color(255, 192, 203), // Pink (default)
-      color(255, 255, 150), // Yellow
-      color(255, 165, 0),   // Orange
-      color(100, 149, 237), // Blue
-      color(147, 112, 219), // Purple
-      color(255, 99, 71)    // Red
-    ];
-
-    // Set initial color to pink and track current color index
-    this.colorIndex = 0;
-    this.color = this.colorOptions[this.colorIndex];
+    // Initialize colors after p5 is ready
+    this.initializeColors();
 
     // Keep the wobble/bounce effect
     this.wobble = 0;
@@ -128,7 +117,7 @@ class Pet {
     scale(this.squishX, this.squishY);
     
     noStroke();
-    fill(this.color);
+    fill(this.getColor());
 
     // -- Draw Ears --
     ellipse(-this.size * 0.25, -this.size * 0.55, this.size * 0.3, this.size * 0.3);
@@ -293,6 +282,39 @@ class Pet {
     }
   }
   
+  // New method to initialize colors safely
+  initializeColors() {
+    try {
+      // Store RGB values instead of p5.Color objects
+      this.colorValues = [
+        [255, 192, 203], // Pink (default)
+        [255, 255, 150], // Yellow
+        [255, 165, 0],   // Orange
+        [100, 149, 237], // Blue
+        [147, 112, 219], // Purple
+        [255, 99, 71]    // Red
+      ];
+      
+      // Set default color index
+      this.colorIndex = 0;
+      
+      // We'll create p5.Color objects on demand in getColor()
+    } catch (error) {
+      console.error("Error initializing pet colors:", error);
+    }
+  }
+  
+  // Method to get current color as valid p5.Color object
+  getColor() {
+    try {
+      const rgb = this.colorValues[this.colorIndex];
+      return color(rgb[0], rgb[1], rgb[2]);
+    } catch (error) {
+      console.error("Error getting pet color:", error);
+      return color(255); // Default to white if there's an error
+    }
+  }
+
   // Change color on double tap/click
   changeColor() {
     // Cycle to next color in sequence
@@ -330,6 +352,29 @@ class Pet {
     this.updateSquish();
     
     // --- Energy, Mood, and Hunger Update Logic ---
+    // Decay rates for the various meters
+    let healthDecayRate = 0.04;
+    let energyDecayRate = 0.05;
+    let hungerIncreaseRate = 0.1;
+    let moodDecayRate = 0.1;
+
+    // Bonuses based on background theme
+    let healthBonus = 1.0;
+    let energyBonus = 1.0;
+    let hungerBonus = 1.0;
+    let moodBonus = 1.0;
+
+    if (backgrounds.currentTheme === "night") {
+      // Halves energy decay rate
+      energyBonus = 0.5;
+    } else if (backgrounds.currentTheme === "space") {
+      // Halves mood decay rate
+      moodBonus = 0.5;
+    } else if (backgrounds.currentTheme === "underwater") {
+      // Halves health decay rate
+      healthBonus = 0.5;
+    }
+
     if (typeof house !== 'undefined' && house.isPetResting() && house.occupiedBy === this) {
       // Pet is resting: restore energy only, leave mood and hunger unchanged.
       this.energy = min(100, this.energy + 0.25);
@@ -342,17 +387,17 @@ class Pet {
       }
     } else {
       // Pet is active: update all meters.
-      this.energy = max(0, this.energy - 0.05);
+      this.energy = max(0, this.energy - energyDecayRate * energyBonus);
       
       // Mood decays normally, but if energy is 0 it decays twice as fast.
       if (this.energy === 0) {
-        this.mood = max(0, this.mood - 0.2);
+        this.mood = max(0, this.mood - moodDecayRate * moodBonus * 2);
       } else {
-        this.mood = max(0, this.mood - 0.1);
+        this.mood = max(0, this.mood - moodDecayRate * moodBonus);
       }
       
       // Hunger increases slowly (0 = full, 100 = starving)
-      this.hunger = min(100, this.hunger + 0.1);
+      this.hunger = min(100, this.hunger + hungerIncreaseRate * hungerBonus);
     }
     
     // Process scheduled heart additions...
@@ -373,7 +418,7 @@ class Pet {
     if (this.energy === 0) decayCount++;
     if (this.mood === 0) decayCount++;
     if (this.hunger === 100) decayCount++;
-    this.health = max(0, this.health - 0.2 * decayCount);
+    this.health = max(0, this.health - healthDecayRate * decayCount * healthBonus);
 
     // Check if pet's health has reached 0.
     if (this.health <= 0 && !this.isDead) {
@@ -384,6 +429,21 @@ class Pet {
     // When hunger goes above 75, move near the feed table and feed, if not already feeding.
     if (this.hunger > 75 && feed.foodServings > 0) {
       this.autoFeed();
+    }
+
+    // --- Gyroscope-Based Movement ---
+    // If device tilt values (rotationX and rotationY) are available, move pet slowly
+    if (!this.isDead && typeof rotationX === 'number' && typeof rotationY === 'number') {
+      // Map device tilt to movement directions.
+      // Adjust the map range and multiplier (0.5) as needed for the desired sensitivity.
+      let tiltX = map(rotationY, -90, 90, -1, 1);
+      let tiltY = map(rotationX, -90, 90, -1, 1);
+
+      let tiltSensitivity = 1.0; // Adjust this value to make the pet more or less sensitive to tilt.
+      
+      // Update pet position while keeping within boundaries.
+      this.x = constrain(this.x + tiltX * tiltSensitivity, this.minX, this.maxX);
+      this.y = constrain(this.y + tiltY * tiltSensitivity, this.minY, this.maxY);
     }
   }
   
@@ -455,10 +515,16 @@ class Pet {
       resetButton.style("background-color", "#4CAF50");
     });
     
-    // Add click event to reset the game
+    // Add both mouse and touch events to reset the game
     resetButton.mousePressed(() => {
       this.resetGame(deathOverlay);
     });
+
+    // Add touch event listeners for mobile devices
+    resetButton.elt.addEventListener('touchstart', (e) => {
+      e.preventDefault(); // Prevent default touch behavior
+      this.resetGame(deathOverlay);
+    }, { passive: false });
   }
 
   resetGame(deathOverlay) {

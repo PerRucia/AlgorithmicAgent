@@ -8,6 +8,7 @@ let lastPlaytimeReward = 0;
 let house;
 let shop;
 let inventory;
+let gameStorage;
 
 // Global flag for showing the backgrounds menu
 let backgroundMenuVisible = false;
@@ -15,11 +16,61 @@ let backgroundMenuVisible = false;
 // Global flag for checking for game over
 let gameOver = false;
 
+// Save button properties
+let saveButtonSize = 40;
+let saveButtonPadding = 10;
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
   
   // Force 60 FPS
   frameRate(60);
+
+  // Initialize storage system
+  gameStorage = new GameStorage();
+
+  // Request device orientation permission on devices that require it (e.g., iOS)
+  if (typeof DeviceOrientationEvent !== 'undefined' && 
+    typeof DeviceOrientationEvent.requestPermission === 'function') {
+    
+    // Try to request permission immediately
+    DeviceOrientationEvent.requestPermission()
+      .then(response => {
+        if (response === "granted") {
+          console.log("Gyroscope permission granted.");
+        } else {
+          console.log("Gyroscope permission denied.");
+        }
+      })
+      .catch(error => {
+        console.error("Gyroscope permission error:", error);
+        
+        // If failed (likely needs user gesture), create a temporary permission dialog
+        let permissionDialog = createDiv("This app needs access to device motion. Tap anywhere to continue.");
+        permissionDialog.position(0, 0);
+        permissionDialog.style("width", "100%");
+        permissionDialog.style("height", "100%");
+        permissionDialog.style("background-color", "rgba(0, 0, 0, 0.8)");
+        permissionDialog.style("color", "white");
+        permissionDialog.style("text-align", "center");
+        permissionDialog.style("padding-top", "40%");
+        permissionDialog.style("font-size", "18px");
+        permissionDialog.style("position", "absolute");
+        permissionDialog.style("z-index", "1000");
+        
+        permissionDialog.mousePressed(() => {
+          DeviceOrientationEvent.requestPermission()
+            .then(response => {
+              if (response === "granted") {
+                console.log("Gyroscope permission granted.");
+              } else {
+                console.log("Gyroscope permission denied.");
+              }
+              permissionDialog.remove();
+            });
+        });
+      });
+  }
   
   // Create currency with initial balance
   currency = new Currency(900);
@@ -65,6 +116,79 @@ function setup() {
   
   // Set up interaction callbacks
   setupInteractionCallbacks();
+  
+  // Try to load saved game data
+  loadGameData();
+}
+
+function loadGameData() {
+  if (gameStorage.hasSavedGame()) {
+    const savedData = gameStorage.loadGame();
+    
+    if (savedData) {
+      // Load pet data
+      if (savedData.pet) {
+        myPet.health = savedData.pet.health;
+        myPet.energy = savedData.pet.energy;
+        myPet.happiness = savedData.pet.happiness;
+        myPet.lastFed = savedData.pet.lastFed;
+        myPet.color = savedData.pet.color;
+      }
+      
+      // Load currency data
+      if (savedData.currency) {
+        currency.resetBalance(savedData.currency.balance);
+      }
+      
+      // Load inventory data
+      if (savedData.inventory && savedData.inventory.items) {
+        inventory.items = savedData.inventory.items;
+      }
+      
+      // Load background theme
+      if (savedData.backgrounds && savedData.backgrounds.currentTheme) {
+        backgrounds.setTheme(savedData.backgrounds.currentTheme);
+      }
+      
+      // Load shop data (purchased backgrounds)
+      if (savedData.shop && savedData.shop.backgroundItems) {
+        shop.backgroundItems = savedData.shop.backgroundItems;
+      }
+      
+      console.log("Game data loaded successfully!");
+    }
+  }
+}
+
+function saveGameData() {
+  const gameData = {
+    pet: myPet,
+    currency: currency,
+    inventory: inventory,
+    backgrounds: backgrounds,
+    shop: shop
+  };
+  
+  const success = gameStorage.saveGame(gameData);
+  
+  if (success) {
+    // Show a temporary save confirmation message
+    let saveMsg = createDiv("Game Saved!");
+    saveMsg.position(width/2, height/2);
+    saveMsg.style('background-color', 'rgba(50, 200, 50, 0.8)');
+    saveMsg.style('color', 'white');
+    saveMsg.style('padding', '10px 20px');
+    saveMsg.style('border-radius', '5px');
+    saveMsg.style('font-size', '20px');
+    saveMsg.style('position', 'absolute');
+    saveMsg.style('transform', 'translate(-50%, -50%)');
+    saveMsg.style('z-index', '1000');
+    
+    // Remove the message after 1.5 seconds
+    setTimeout(() => {
+      saveMsg.remove();
+    }, 1500);
+  }
 }
 
 function setupInteractionCallbacks() {
@@ -76,39 +200,6 @@ function setupInteractionCallbacks() {
     },
     onBorderInteract: (x, y) => {
       console.log("Border interaction detected");
-    },
-    onDoubleTap: (x, y) => {
-      // Check if double-tapped on pet (change color)
-      let d = dist(x, y, myPet.x, myPet.y);
-      if (d < myPet.size / 2) {
-        myPet.changeColor();
-        
-        // Add some colorful hearts and award a bonus
-        const currentTime = millis();
-        myPet.heartSchedule.push(
-          { time: currentTime + 100, colorful: true },
-          { time: currentTime + 200, colorful: true },
-          { time: currentTime + 300, colorful: true }
-        );
-        currency.addCoins(10, "made pet happy");
-      }
-      // Otherwise check if house was double-tapped to toggle resting state
-      else if (house.contains(x, y)) {
-        if (house.isPetResting()) {
-          // If pet is resting, make it leave and return to default position.
-          house.petLeave();
-          myPet.x = myPet.targetX;
-          myPet.y = myPet.targetY;
-          console.log("House tapped: pet is leaving the house.");
-        } else {
-          // If pet is active, send it to rest in the house.
-          const restingPos = house.petEnter(myPet);
-          myPet.x = restingPos.x;
-          myPet.y = restingPos.y;
-          console.log("House tapped: pet is entering the house to rest.");
-          currency.addCoins(15, "pet is resting");
-        }
-      }
     },
     onDrag: (x, y, dx, dy) => {
       // If dragging near the pet (active), make it follow the drag.
@@ -152,6 +243,9 @@ function draw() {
   // Display the border
   myBorder.display();
   
+  // Draw save button in top-right corner
+  drawSaveButton();
+  
   // If the backgrounds menu should be visible, draw it on top.
   if (backgroundMenuVisible) {
     drawBackgroundMenu();
@@ -164,10 +258,51 @@ function draw() {
   }
 }
 
+// Draw save button in top-right corner
+function drawSaveButton() {
+  const btnX = width - saveButtonSize - saveButtonPadding;
+  const btnY = saveButtonPadding;
+  
+  push();
+  // Button background
+  fill(50, 100, 200);
+  stroke(255);
+  strokeWeight(2);
+  rect(btnX, btnY, saveButtonSize, saveButtonSize, 5);
+  
+  // Save icon (floppy disk symbol)
+  fill(255);
+  noStroke();
+  // Outer shape of floppy
+  rect(btnX + saveButtonSize * 0.2, btnY + saveButtonSize * 0.2, 
+       saveButtonSize * 0.6, saveButtonSize * 0.6, 2);
+  // Inner rectangle
+  fill(50, 100, 200);
+  rect(btnX + saveButtonSize * 0.3, btnY + saveButtonSize * 0.3, 
+       saveButtonSize * 0.4, saveButtonSize * 0.2);
+  pop();
+}
+
+// Check if save button was clicked
+function isSaveButtonPressed(x, y) {
+  const btnX = width - saveButtonSize - saveButtonPadding;
+  const btnY = saveButtonPadding;
+  
+  return (x > btnX && x < btnX + saveButtonSize && 
+          y > btnY && y < btnY + saveButtonSize);
+}
+
 function mousePressed() {
   if (gameOver) {
     return false;
   }
+  
+  // Check if save button was pressed
+  if (isSaveButtonPressed(mouseX, mouseY)) {
+    saveGameData();
+    return false;
+  }
+  
   if (backgroundMenuVisible) {
     let themeKeys = Object.keys(backgrounds.themes);
     let buttonW = width * 0.3;

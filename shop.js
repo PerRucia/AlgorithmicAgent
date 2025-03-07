@@ -21,9 +21,12 @@ class Shop {
     // For the Backgrounds category, add purchasable background items.
     // Each background costs 1000 coins and can only be purchased once.
     this.backgroundItems = [
-      { id: 'night', name: 'Night', description: 'A peaceful starry night background.', price: 100, stock: 1 },
-      { id: 'space', name: 'Space', description: 'A deep space exploration background.', price: 100, stock: 1 },
-      { id: 'underwater', name: 'Underwater', description: 'A calming underwater scene.', price: 100, stock: 1 }
+      { id: 'night', name: 'Night', description: 'A peaceful starry night background.\n\nBonus: Slows down energy loss.', 
+        price: 100, stock: 1 },
+      { id: 'space', name: 'Space', description: 'A deep space exploration background.\n\nBonus: Slows down mood loss.', 
+        price: 100, stock: 1 },
+      { id: 'underwater', name: 'Underwater', description: 'A calming underwater scene.\n\nBonus: Slows down health loss.', 
+        price: 200, stock: 1 }
     ];
     
     // Detail window for item info.
