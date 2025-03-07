@@ -16,9 +16,15 @@ let backgroundMenuVisible = false;
 // Global flag for checking for game over
 let gameOver = false;
 
-// Save button properties
-let saveButtonSize = 40;
-let saveButtonPadding = 10;
+// Settings button properties
+let settingsButtonSize = 40;
+let settingsButtonPadding = 10;
+
+// Global flag for showing the settings menu
+let settingsMenuVisible = false;
+
+// Global flag for showing the instructions dialog
+let instructionsDialogVisible = false;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -243,11 +249,19 @@ function draw() {
   // Display the border
   myBorder.display();
   
-  // Draw save button in top-right corner
-  drawSaveButton();
+  // Draw settings button in top-right corner
+  drawSettingsButton();
   
+  // If the instructions dialog should be visible, draw it
+  if (instructionsDialogVisible) {
+    displayInstructionsDialog();
+  }
+  // If the settings menu should be visible, draw it
+  else if (settingsMenuVisible) {
+    drawSettingsMenu();
+  }
   // If the backgrounds menu should be visible, draw it on top.
-  if (backgroundMenuVisible) {
+  else if (backgroundMenuVisible) {
     drawBackgroundMenu();
   }
   else if (shop.visible) {
@@ -258,38 +272,299 @@ function draw() {
   }
 }
 
-// Draw save button in top-right corner
-function drawSaveButton() {
-  const btnX = width - saveButtonSize - saveButtonPadding;
-  const btnY = saveButtonPadding;
+// Draw settings button in top-right corner (gear icon)
+function drawSettingsButton() {
+  const btnX = width - settingsButtonSize - settingsButtonPadding;
+  const btnY = settingsButtonPadding;
   
   push();
   // Button background
   fill(50, 100, 200);
   stroke(255);
   strokeWeight(2);
-  rect(btnX, btnY, saveButtonSize, saveButtonSize, 5);
+  rect(btnX, btnY, settingsButtonSize, settingsButtonSize, 5);
   
-  // Save icon (floppy disk symbol)
+  // Draw gear icon
   fill(255);
   noStroke();
-  // Outer shape of floppy
-  rect(btnX + saveButtonSize * 0.2, btnY + saveButtonSize * 0.2, 
-       saveButtonSize * 0.6, saveButtonSize * 0.6, 2);
-  // Inner rectangle
-  fill(50, 100, 200);
-  rect(btnX + saveButtonSize * 0.3, btnY + saveButtonSize * 0.3, 
-       saveButtonSize * 0.4, saveButtonSize * 0.2);
+  
+  // Draw gear center
+  const centerX = btnX + settingsButtonSize / 2;
+  const centerY = btnY + settingsButtonSize / 2;
+  const outerRadius = settingsButtonSize * 0.35;
+  const innerRadius = settingsButtonSize * 0.2;
+  
+  // Draw center circle
+  ellipse(centerX, centerY, innerRadius * 2);
+  
+  // Draw gear teeth
+  const teethCount = 8;
+  for (let i = 0; i < teethCount; i++) {
+    const angle = TWO_PI * i / teethCount;
+    const tipX = centerX + cos(angle) * outerRadius;
+    const tipY = centerY + sin(angle) * outerRadius;
+    const baseX1 = centerX + cos(angle - 0.2) * innerRadius;
+    const baseY1 = centerY + sin(angle - 0.2) * innerRadius;
+    const baseX2 = centerX + cos(angle + 0.2) * innerRadius;
+    const baseY2 = centerY + sin(angle + 0.2) * innerRadius;
+    
+    // Draw each tooth as a triangle
+    triangle(tipX, tipY, baseX1, baseY1, baseX2, baseY2);
+  }
   pop();
 }
 
-// Check if save button was clicked
-function isSaveButtonPressed(x, y) {
-  const btnX = width - saveButtonSize - saveButtonPadding;
-  const btnY = saveButtonPadding;
+// Check if settings button was clicked
+function isSettingsButtonPressed(x, y) {
+  const btnX = width - settingsButtonSize - settingsButtonPadding;
+  const btnY = settingsButtonPadding;
   
-  return (x > btnX && x < btnX + saveButtonSize && 
-          y > btnY && y < btnY + saveButtonSize);
+  return (x > btnX && x < btnX + settingsButtonSize && 
+          y > btnY && y < btnY + settingsButtonSize);
+}
+
+// Draw settings menu with options
+function drawSettingsMenu() {
+  push();
+  // Semi-transparent dark overlay covering the whole screen
+  fill(0, 150);
+  noStroke();
+  rect(0, 0, width, height);
+  
+  // Menu panel dimensions
+  const menuWidth = min(width * 0.8, 400);
+  const buttonHeight = 40;
+  const spacing = 15;
+  const buttonsCount = 4;
+  const menuHeight = buttonHeight * buttonsCount + spacing * (buttonsCount + 2);
+  
+  // Menu position
+  const menuX = width / 2 - menuWidth / 2;
+  const menuY = height / 2 - menuHeight / 2;
+  
+  // Draw menu background
+  fill(240);
+  stroke(50);
+  strokeWeight(2);
+  rect(menuX, menuY - spacing, menuWidth, menuHeight, 10);
+  
+  // Title
+  textAlign(CENTER, TOP);
+  fill(50, 80, 150);
+  noStroke();
+  textSize(24);
+  text("Settings", width / 2, menuY - spacing * 0.25);
+  
+  // Draw menu buttons
+  const buttonOptions = [
+    { label: "Save Game", color: color(50, 150, 50) },
+    { label: "Clear Save", color: color(200, 100, 50) },
+    { label: "Start New Game", color: color(70, 120, 200) },
+    { label: "Instructions", color: color(150, 50, 150) }
+  ];
+  
+  for (let i = 0; i < buttonOptions.length; i++) {
+    const btnY = menuY + spacing * (i + 1.5) + buttonHeight * i;
+    const btnWidth = menuWidth * 0.8;
+    const btnX = width / 2 - btnWidth / 2;
+    
+    // Button background
+    fill(buttonOptions[i].color);
+    stroke(30);
+    strokeWeight(2);
+    rect(btnX, btnY, btnWidth, buttonHeight, 8);
+    
+    // Button text
+    textAlign(CENTER, CENTER);
+    fill(255);
+    noStroke();
+    textSize(20);
+    text(buttonOptions[i].label, btnX + btnWidth / 2, btnY + buttonHeight / 2);
+  }
+  pop();
+}
+
+// Display instructions dialog
+function displayInstructionsDialog() {
+  push();
+  // Semi-transparent dark overlay covering the whole screen
+  fill(0, 150);
+  noStroke();
+  rect(0, 0, width, height);
+  
+  // Dialog dimensions
+  const dialogWidth = min(width * 0.9, 500);
+  const dialogHeight = min(height * 0.8, 600);
+  
+  // Dialog position
+  const dialogX = width / 2 - dialogWidth / 2;
+  const dialogY = height / 2 - dialogHeight / 2;
+  
+  // Draw dialog background
+  fill(245, 245, 255);
+  stroke(50);
+  strokeWeight(2);
+  rect(dialogX, dialogY, dialogWidth, dialogHeight, 10);
+  
+  // Title
+  textAlign(CENTER, TOP);
+  fill(50, 80, 150);
+  noStroke();
+  textSize(28);
+  text("Game Instructions", width / 2, dialogY + 20);
+  
+  // Close button
+  const closeButtonSize = 30;
+  fill(220, 50, 50);
+  noStroke();
+  rect(dialogX + dialogWidth - closeButtonSize - 15, dialogY + 15, closeButtonSize, closeButtonSize, 5);
+  fill(255);
+  textAlign(CENTER, CENTER);
+  textSize(18);
+  text("X", dialogX + dialogWidth - closeButtonSize/2 - 15, dialogY + 15 + closeButtonSize/2);
+  
+  // Instructions text
+  fill(60, 60, 80);
+  textAlign(LEFT, TOP);
+  textSize(18);
+  textWrap(WORD);
+  
+  const margin = 30;
+  const instructionsText = 
+    "Welcome to the Algorithmic Agent pet game! Here's how to play:\n\n" +
+    "• Pet Care: Keep your pet happy and healthy by feeding it regularly.\n\n" +
+    "• Interactions: Touch/click your pet to interact with it.\n\n" +
+    "• House: Your pet can rest in its house. Tap the house to make your pet enter or leave.\n\n" +
+    "• Shop: Buy food and accessories for your pet with coins you earn.\n\n" +
+    "• Inventory: Use items you've purchased from the inventory menu.\n\n" +
+    "• Backgrounds: Change the environment by purchasing and selecting different backgrounds.\n\n" +
+    "• Settings: Save your game progress or start a new game using the gear icon.\n\n" +
+    "Remember to save your game regularly to keep your progress!";
+  
+  text(instructionsText, dialogX + margin, dialogY + 70, dialogWidth - margin*2);
+  
+  pop();
+}
+
+function handleInstructionsDialogClick(x, y) {
+  // Dialog dimensions (must match the ones in displayInstructionsDialog)
+  const dialogWidth = min(width * 0.9, 500);
+  const dialogHeight = min(height * 0.8, 600);
+  
+  // Dialog position
+  const dialogX = width / 2 - dialogWidth / 2;
+  const dialogY = height / 2 - dialogHeight / 2;
+  
+  // Close button
+  const closeButtonSize = 30;
+  const closeX = dialogX + dialogWidth - closeButtonSize - 15;
+  const closeY = dialogY + 15;
+  
+  // Check if clicking the close button
+  if (x > closeX && x < closeX + closeButtonSize && 
+      y > closeY && y < closeY + closeButtonSize) {
+    instructionsDialogVisible = false;
+    return true;
+  }
+  
+  // Close dialog when clicking outside
+  if (x < dialogX || x > dialogX + dialogWidth || 
+      y < dialogY || y > dialogY + dialogHeight) {
+    instructionsDialogVisible = false;
+    return true;
+  }
+  
+  return true; // Indicate that the click was handled
+}
+
+// Check if any settings menu button was pressed and handle it
+function checkSettingsMenuButtons(x, y) {
+  if (!settingsMenuVisible) return false;
+  
+  const menuWidth = min(width * 0.8, 400);
+  const buttonHeight = 40;
+  const spacing = 15;
+  const buttonsCount = 4;
+  const menuHeight = buttonHeight * buttonsCount + spacing * (buttonsCount + 2);
+  
+  const menuX = width / 2 - menuWidth / 2;
+  const menuY = height / 2 - menuHeight / 2;
+  
+  const btnWidth = menuWidth * 0.8;
+  const btnX = width / 2 - btnWidth / 2;
+  
+  for (let i = 0; i < 4; i++) { // Updated from 3 to 4
+    const btnY = menuY + spacing * (i + 1.5) + buttonHeight * i;
+    
+    if (x > btnX && x < btnX + btnWidth && 
+        y > btnY && y < btnY + buttonHeight) {
+      
+      switch(i) {
+        case 0: // Save Game
+          saveGameData();
+          break;
+        case 1: // Clear Save
+          if (confirm("Are you sure you want to delete your saved game?")) {
+            gameStorage.clearSavedGame();
+            // Show confirmation message
+            let msg = createDiv("Saved game deleted!");
+            msg.position(width/2, height/2);
+            msg.style('background-color', 'rgba(200, 50, 50, 0.8)');
+            msg.style('color', 'white');
+            msg.style('padding', '10px 20px');
+            msg.style('border-radius', '5px');
+            msg.style('font-size', '20px');
+            msg.style('position', 'absolute');
+            msg.style('transform', 'translate(-50%, -50%)');
+            msg.style('z-index', '1000');
+            setTimeout(() => msg.remove(), 1500);
+          }
+          break;
+        case 2: // Start New Game
+          if (confirm("Are you sure you want to start a new game? This will reset your current progress.")) {
+            // Reset game state
+            currency.resetBalance(900);
+            inventory.reset();
+            shop.reset();
+            myPet = new Pet(width/2, height/2);
+            let playArea = myBorder.getPlayableArea();
+            myPet.setBoundaries(0, 0, playArea.width, playArea.height);
+            house.setPet(myPet);
+            interactHandler.setReferences(myPet, myBorder, playArea, house);
+            
+            // Show confirmation message
+            let msg = createDiv("New game started!");
+            msg.position(width/2, height/2);
+            msg.style('background-color', 'rgba(70, 120, 200, 0.8)');
+            msg.style('color', 'white');
+            msg.style('padding', '10px 20px');
+            msg.style('border-radius', '5px');
+            msg.style('font-size', '20px');
+            msg.style('position', 'absolute');
+            msg.style('transform', 'translate(-50%, -50%)');
+            msg.style('z-index', '1000');
+            setTimeout(() => msg.remove(), 1500);
+          }
+          break;
+        case 3: // Instructions
+          instructionsDialogVisible = true;
+          break;
+      }
+      
+      // Close the settings menu after action
+      settingsMenuVisible = false;
+      return true;
+    }
+  }
+  
+  // Check if click is outside the menu to close it
+  if (x < menuX || x > menuX + menuWidth || 
+      y < menuY || y > menuY + menuHeight) {
+    settingsMenuVisible = false;
+    return true;
+  }
+  
+  return false;
 }
 
 function mousePressed() {
@@ -297,9 +572,21 @@ function mousePressed() {
     return false;
   }
   
-  // Check if save button was pressed
-  if (isSaveButtonPressed(mouseX, mouseY)) {
-    saveGameData();
+  // Check if instructions dialog is visible and handle clicks
+  if (instructionsDialogVisible) {
+    handleInstructionsDialogClick(mouseX, mouseY);
+    return false;
+  }
+  
+  // Check if settings button was pressed
+  if (isSettingsButtonPressed(mouseX, mouseY)) {
+    settingsMenuVisible = !settingsMenuVisible;
+    return false;
+  }
+  
+  // Check if any settings menu button was pressed
+  if (settingsMenuVisible) {
+    checkSettingsMenuButtons(mouseX, mouseY);
     return false;
   }
   

@@ -475,6 +475,8 @@ class Pet {
     this.isDead = true;
     // Set a global flag so other input handlers (e.g., in Border) can ignore inputs.
     gameOver = true;
+
+    gameStorage.clearSavedGame(); // Clear saved game data
     
     // Create a full-screen overlay to darken the screen and show the death message.
     let deathOverlay = createDiv("Your pet has died!<br>Try again?");
